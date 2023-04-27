@@ -13,6 +13,8 @@
 
 #include "clock_config.h"
 #include "flash_drv.h"
+#include "gpio_drv.h"
+#include "wdog_drv.h"
 
 /* PLL parameter structure*/
 CLK_PLLConfig_t PLL80M =
@@ -25,8 +27,11 @@ CLK_PLLConfig_t PLL80M =
 };
 
 /* Board clock init function */
-void Ex_ClockInit(void)
+void PLL80M_ClockInit(void)
 {
+    /* Disable wdog */
+    WDOG_Disable();
+    
     /* Set Core and bus clock */
     CLK_SetClkDivider(CLK_CORE, CLK_DIV_1);
     CLK_SetClkDivider(CLK_BUS, CLK_DIV_1);
@@ -49,4 +54,46 @@ void Ex_ClockInit(void)
     CLK_ModuleSrc(CLK_FLASH, CLK_SRC_OSC40M);
     CLK_SetClkDivider(CLK_FLASH, CLK_DIV_5);
     SYSCTRL_EnableModule(SYSCTRL_FLASH);
+}
+
+void OSC40M_ClockInit(void)
+{
+    /* Disable wdog */
+    WDOG_Disable();
+
+    /* Enable OSC40M clock*/
+    CLK_OSC40MEnable(CLK_OSC_FREQ_MODE_HIGH, ENABLE, CLK_OSC_XTAL);
+    /* Select OSC40M as system clock*/
+    CLK_SysClkSrc(CLK_SYS_OSC40M);
+}
+
+void CLKOUT_Configure(void)
+{
+    CLK_ModuleSrc(CLK_PORTB, CLK_SRC_OSC40M);
+    CLK_SetClkDivider(CLK_PORTB, CLK_DIV_1);
+    SYSCTRL_EnableModule(SYSCTRL_PORTB);
+    
+    PORT_PinmuxConfig(PORT_B, GPIO_4, PTB4_CLKOUT);
+
+    /*
+        CLK_OUT_FIRC64M = 1U
+        CLK_OUT_OSC40M = 2U
+        CLK_OUT_PLL = 3U
+        CLK_OUT_SLOW = 8U
+        CLK_OUT_BUS = 9U
+        CLK_OUT_CORE = 10U
+        CLK_OUT_OSC32K = 11U
+        CLK_OUT_LPO32K = 12U
+    */
+
+    /*
+        CLK_OUT_DIV_1 = 0U,
+        CLK_OUT_DIV_2 = 1U,
+        CLK_OUT_DIV_4 = 2U,
+        CLK_OUT_DIV_8 = 3U
+    */
+    CLK_OutSrc_t outSrc = CLK_OUT_OSC40M;
+    CLK_OutDiv_t divider = CLK_OUT_DIV_1;
+
+    CLK_ClkOutEnable(outSrc, divider);
 }

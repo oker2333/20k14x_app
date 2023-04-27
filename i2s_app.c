@@ -1,24 +1,25 @@
-#include "common_drv.h"
-#include "wdog_drv.h"
-#include "stim_drv.h"
-#include "i2s_drv.h"
-#include "int_drv.h"
 #include "clock_config.h"
 #include "serial.h"
+
+#define OSC40M_ENABLE 1
 
 int main(void)
 {
     /* CLock init*/
-    Ex_ClockInit();
-
-    /* Disable wdog (wdog is enabled when default)*/
-    WDOG_Disable();
-
+#if OSC40M_ENABLE
+    OSC40M_ClockInit();
+#else
+    PLL80M_ClockInit();
+#endif
+    
     /* Serial port init*/
     Ex_BoardUartInit();
+    
+    /* clock out configure */
+    CLKOUT_Configure();
 
     /* Print example name*/
-    printf("I2S app start.\n");
+    printf("20k14x_app I2S start.\n");
     
     while(1);
 }

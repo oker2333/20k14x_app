@@ -17,8 +17,10 @@
 #include "sysctrl_drv.h"
 #include "clock_drv.h"
 
+void CLKOUT_Configure(void);
 
 /* Board clock init function */
-void Ex_ClockInit(void);
+void PLL80M_ClockInit(void);
+void OSC40M_ClockInit(void);
 
 #endif /* CLOCK_CONFIG_H */
