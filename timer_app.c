@@ -14,9 +14,6 @@ int main(void)
     
     /* Serial port init*/
     Ex_BoardUartInit();
-    
-    /* clock out configure */
-    CLKOUT_Configure();
 
     /* Print example name*/
     printf("20k14x_app Timer start.\n");

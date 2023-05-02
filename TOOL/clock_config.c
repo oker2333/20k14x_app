@@ -64,7 +64,13 @@ void OSC40M_ClockInit(void)
     /* Enable OSC40M clock*/
     CLK_OSC40MEnable(CLK_OSC_FREQ_MODE_HIGH, ENABLE, CLK_OSC_XTAL);
     /* Select OSC40M as system clock*/
-    CLK_SysClkSrc(CLK_SYS_OSC40M);
+    while(CLK_SysClkSrc(CLK_SYS_OSC40M));
+    
+    /*Set Flash clock, please select SLOW clock source when using STOP mode function*/
+    SYSCTRL_DisableModule(SYSCTRL_FLASH);
+    CLK_ModuleSrc(CLK_FLASH, CLK_SRC_OSC40M);
+    CLK_SetClkDivider(CLK_FLASH, CLK_DIV_5);
+    SYSCTRL_EnableModule(SYSCTRL_FLASH);
 }
 
 void CLKOUT_Configure(void)

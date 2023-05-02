@@ -345,6 +345,30 @@
                     <name>CCIncludePath2</name>
                     <state>$PROJ_DIR$\..\StdDriver\Inc</state>
                     <state>$PROJ_DIR$\..\TOOL</state>
+                    <state>$PROJ_DIR$\..\I2C</state>
+                    <state>$PROJ_DIR$\..\I2S</state>
+                    <state>$PROJ_DIR$\..\ADC</state>
+                    <state>$PROJ_DIR$\..\CAN</state>
+                    <state>$PROJ_DIR$\..\CMP</state>
+                    <state>$PROJ_DIR$\..\CMU</state>
+                    <state>$PROJ_DIR$\..\CRC</state>
+                    <state>$PROJ_DIR$\..\EIRU</state>
+                    <state>$PROJ_DIR$\..\EWDT</state>
+                    <state>$PROJ_DIR$\..\FLASH</state>
+                    <state>$PROJ_DIR$\..\GPIO</state>
+                    <state>$PROJ_DIR$\..\MCPWM</state>
+                    <state>$PROJ_DIR$\..\PARCC</state>
+                    <state>$PROJ_DIR$\..\PMU</state>
+                    <state>$PROJ_DIR$\..\RTC</state>
+                    <state>$PROJ_DIR$\..\SCC</state>
+                    <state>$PROJ_DIR$\..\SCM</state>
+                    <state>$PROJ_DIR$\..\SMPU</state>
+                    <state>$PROJ_DIR$\..\SPI</state>
+                    <state>$PROJ_DIR$\..\SRMC</state>
+                    <state>$PROJ_DIR$\..\TIMER</state>
+                    <state>$PROJ_DIR$\..\UART</state>
+                    <state>$PROJ_DIR$\..\WDOG</state>
+                    <state>$PROJ_DIR$\..\</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -2150,6 +2174,12 @@
     </group>
     <group>
         <name>I2C</name>
+        <file>
+            <name>$PROJ_DIR$\..\I2C\z20k14x_i2c.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\I2C\z20k14x_i2c.h</name>
+        </file>
     </group>
     <group>
         <name>I2S</name>
@@ -2285,6 +2315,9 @@
         <excluded>
             <configuration>Debug</configuration>
         </excluded>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\register.h</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\scm_app.c</name>

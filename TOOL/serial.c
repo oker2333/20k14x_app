@@ -15,7 +15,7 @@
 /* UART configuration*/
  static const UART_Config_t uartConfig = 
 {
-    .baudRate = 9600,               /* UART baud rate: 9600 */
+    .baudRate = 460800,               /* UART baud rate: 9600 */
     .dataBits = UART_DATABITS_8,    /* UART data bits length: 8 bits */
     .parity = UART_PARITY_NONE,     /* UART parity: none */
     .stopBits = UART_STOPBITS_1,    /* UART stop bits length: 1 bit */
