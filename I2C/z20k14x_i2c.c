@@ -102,29 +102,49 @@ void I2C_SDASetupTimeConfig(I2C_TypeDef* I2Cx, uint32_t setup_time_ns,uint32_t c
   I2Cx->SDA_SETUP_TIMING = (uint32_t)(setup_time_ns * clock_MHz /1000 + 1.0f);
 }
 
-void I2C_SDAHoldTimeConfig(I2C_TypeDef* I2Cx, I2C_holdTimeParam_t* config,uint32_t clock_MHz)
+void I2C_SDAHoldTimeConfig(I2C_TypeDef* I2Cx, const I2C_holdTimeParam_t* config,uint32_t clock_MHz)
 {
   I2Cx->SDA_HOLD_TIMING = ((uint8_t)(config->SDA_TxHoldTime * clock_MHz / 1000)) | (((uint8_t)(config->SDA_RxHoldTime * clock_MHz / 1000)) << 0x08);
 }
 
-void I2C_SCLCountConfig(I2C_TypeDef* I2Cx, I2C_SCLCountParam_t* config)
+void I2C_SCLHighLowDurationConfig(I2C_TypeDef* I2Cx, const I2C_SCLDurationParam_t* config, uint32_t clock_MHz)
 {
+  uint32_t I2C_status = I2Cx->CONFIG0 & 0x01UL;
+  uint32_t low_duration = config->SCL_Low_Duration * clock_MHz / 1000;
+  uint32_t high_duration = config->SCL_High_Duration * clock_MHz / 1000;
+  const uint32_t scl_high_count = 65525UL;
+  
+  I2Cx->CONFIG0 &= ~0x01UL;
+  
   I2C_speed_t speed = (I2C_speed_t)((I2Cx->CONFIG1 >> 0x06) & 0x03);
   if(speed == I2C_Standard)
   {
-    I2Cx->STD_SCL_LCNT = config->SCL_Low_Count;
-    I2Cx->STD_SCL_HCNT = config->SCL_High_Count;
+    I2Cx->STD_SCL_LCNT = low_duration;
+    I2Cx->STD_SCL_HCNT = ((high_duration <= scl_high_count)?high_duration:scl_high_count);
   }
   else if(speed == I2C_Fast)
   {
-    I2Cx->FST_SCL_LCNT = config->SCL_Low_Count;
-    I2Cx->FST_SCL_HCNT = config->SCL_High_Count;
+    I2Cx->FST_SCL_LCNT = low_duration;
+    I2Cx->FST_SCL_HCNT = ((high_duration <= scl_high_count)?high_duration:scl_high_count);
   }
   else if(speed == I2C_High)
   {
-    I2Cx->HS_SCL_LCNT = config->SCL_Low_Count;
-    I2Cx->HS_SCL_HCNT = config->SCL_High_Count;
-  } 
+    I2Cx->HS_SCL_LCNT = low_duration;
+    I2Cx->HS_SCL_HCNT = ((high_duration <= scl_high_count)?high_duration:scl_high_count);
+  }
+  
+  I2Cx->CONFIG0 |= I2C_status;
+}
+
+void I2C_spikeSuppressionLimitConfig (I2C_TypeDef* I2Cx, const I2C_SpikeLengthParam_t* config)
+{
+  uint32_t I2C_status = I2Cx->CONFIG0 & 0x01UL;  
+  I2Cx->CONFIG0 &= ~0x01UL;
+  
+  I2Cx->FSTD_SPKCNT = config->fast_std_spike_cnt;
+  I2Cx->HS_SPKCNT = config->high_spike_cnt;
+  
+  I2Cx->CONFIG0 |= I2C_status;
 }
 
 void I2C_SCLStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout_ns,uint32_t clock_MHz)
@@ -149,16 +169,16 @@ void I2C_enable(I2C_TypeDef* I2Cx,ctrlState_t state)
   }
 }
 
-void I2C_init(I2C_TypeDef* I2Cx, I2C_config_t* config)
+void I2C_init(I2C_TypeDef* I2Cx, const I2C_config_t* config)
 {
   uint32_t I2C_status = I2Cx->CONFIG0 & 0x01UL;  
   I2Cx->CONFIG0 &= ~0x01UL;
   I2Cx->CONFIG1 = config->masterSlaveMode | (config->restart << 0x02) | (config->speedMode << 0x06) | (config->addrBitMode << 0x09);
-  I2Cx->SLAVE_ADDR = config->localAddr;  
+  I2Cx->SLAVE_ADDR = config->localAddr;
   I2Cx->CONFIG0 |= I2C_status;
 }
 
-void I2C_FIFOLevelSet(I2C_TypeDef* I2Cx, I2C_FIFOParam_t* config)
+void I2C_FIFOLevelSet(I2C_TypeDef* I2Cx, const I2C_FIFOParam_t* config)
 {
   I2Cx->RXFIFO_WATER_MARK = config->RxFIFO_Water_Mark;
   I2Cx->TXFIFO_WATER_MARK = config->TxFIFO_Water_Mark;
@@ -174,7 +194,7 @@ uint32_t I2C_TxFIFOCountGet(I2C_TypeDef* I2Cx)
   return I2Cx->TX_FIFO_CNT;
 }
 
-void I2C_DMAWatermarkSet(I2C_TypeDef* I2Cx, I2C_DMAParam_t* config)
+void I2C_DMAWatermarkSet(I2C_TypeDef* I2Cx, const I2C_DMAParam_t* config)
 {
   I2Cx->DMA_CTRL |= (config->DMA_TXFIFO_WATERMARK << 0x02) | (config->DMA_RXFIFO_WATERMARK << 0x04);
 }

@@ -33,6 +33,12 @@ I2C1_SLAVE_ADDR:0x1F
 
 #define OSC40M_ENABLE 1
 
+#if OSC40M_ENABLE
+#define SYSTEM_CLOCK_FREQUENCE 40
+#else
+#define SYSTEM_CLOCK_FREQUENCE 80
+#endif
+
 #define I2C_MASTER_ADDR 0x0F
 #define I2C_SLAVE_ADDR 0x1F
 
@@ -64,6 +70,12 @@ I2C_DMAParam_t DMAConfig =
 {
   3,
   3
+};
+
+I2C_SCLDurationParam_t SCLDurationConfig = 
+{
+  5000,
+  5000
 };
 
 void I2C0_GPIO_init(void)
@@ -122,16 +134,6 @@ void DMA_I2C1_Configure(void)
   
 }
 
-void I2C0_Interrupt_Handler(void)
-{
-  
-}
-
-void I2C1_Interrupt_Handler(void)
-{
-  
-}
-
 int main(void)
 {
 #if OSC40M_ENABLE
@@ -154,18 +156,35 @@ int main(void)
     I2C_DMAWatermarkSet(I2C0,&DMAConfig);
     I2C_DMAWatermarkSet(I2C1,&DMAConfig);
     
+    I2C_SCLHighLowDurationConfig(I2C0, &SCLDurationConfig,SYSTEM_CLOCK_FREQUENCE);
+    I2C_SCLHighLowDurationConfig(I2C1, &SCLDurationConfig,SYSTEM_CLOCK_FREQUENCE);
+
     I2C_enable(I2C0,Enable);
     I2C_enable(I2C1,Enable);
     
     I2C_DMAEnable(I2C0, Disbale, Disbale);
     I2C_DMAEnable(I2C1, Disbale, Disbale);
     
-    I2C_transmitCmd(I2C0, Normal_Dest_Addr, I2C_SLAVE_ADDR, 0x0A, I2C_RESET_STOP_DIS);
-    I2C_transmitData(I2C0, 0x0B, I2C_RESET_STOP_EN);
-    I2C_transmitData(I2C0, 0x0C, I2C_STOP_EN);
+#if 0
+    
+    printf("I2C0_STD_SCL_HCNT = 0x%x\n",I2C0_STD_SCL_HCNT);
+    printf("I2C0_STD_SCL_LCNT = 0x%x\n",I2C0_STD_SCL_LCNT);
+    
+#endif
+    
+    I2C_transmitCmd(I2C0, Normal_Dest_Addr, I2C_SLAVE_ADDR, 0x00, I2C_RESET_STOP_DIS);
+    for(uint32_t count = 1;count <= 0xFF;count++)
+    {
+      I2C_restartStop_t cmd = I2C_RESET_STOP_DIS;
+      if(count == 255)
+      {
+        cmd = I2C_STOP_EN;
+      }
+      while(I2C_TxFIFOCountGet(I2C0) == I2C_TX_FIFO_DEPTH);
+      I2C_transmitData(I2C0, count, cmd);
+    }
 
-    /* Print example name*/
-    printf("20k14x_app I2C start.\n");
+    printf("20k14x_app I2C start.\n\n");
     
     while(1);
 }

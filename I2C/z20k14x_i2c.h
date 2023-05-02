@@ -3,6 +3,9 @@
 
 #include "register.h"
 
+#define I2C_RX_FIFO_DEPTH 4
+#define I2C_TX_FIFO_DEPTH 4
+
 typedef enum
 {
   Set,
@@ -91,9 +94,15 @@ typedef struct
 
 typedef struct
 {
-  uint32_t SCL_Low_Count;
-  uint32_t SCL_High_Count;
-}I2C_SCLCountParam_t;
+  uint32_t SCL_Low_Duration;
+  uint32_t SCL_High_Duration;
+}I2C_SCLDurationParam_t;
+
+typedef struct
+{
+  uint32_t fast_std_spike_cnt;
+  uint32_t high_spike_cnt;
+}I2C_SpikeLengthParam_t;
 
 typedef enum
 {
@@ -190,7 +199,11 @@ void I2C_errorStatusAllClear(I2C_TypeDef* I2Cx);
 
 void I2C_SDASetupTimeConfig(I2C_TypeDef* I2Cx, uint32_t setup_time_ns,uint32_t clock_MHz);
 
-void I2C_SCLCountConfig(I2C_TypeDef* I2Cx, I2C_SCLCountParam_t* config);
+void I2C_SDAHoldTimeConfig(I2C_TypeDef* I2Cx, const I2C_holdTimeParam_t* config,uint32_t clock_MHz);
+
+void I2C_SCLHighLowDurationConfig(I2C_TypeDef* I2Cx, const I2C_SCLDurationParam_t* config, uint32_t clock_MHz);
+
+void I2C_spikeSuppressionLimitConfig (I2C_TypeDef* I2Cx, const I2C_SpikeLengthParam_t* config);
 
 void I2C_SCLStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout_ns,uint32_t clock_MHz);
 
@@ -198,11 +211,11 @@ void I2C_SDAStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout_ns,uint32_t cloc
 
 void I2C_enable(I2C_TypeDef* I2Cx,ctrlState_t state);
 
-void I2C_init(I2C_TypeDef* I2Cx, I2C_config_t* config);
+void I2C_init(I2C_TypeDef* I2Cx, const I2C_config_t* config);
 
-void I2C_FIFOLevelSet(I2C_TypeDef* I2Cx, I2C_FIFOParam_t* config);
+void I2C_FIFOLevelSet(I2C_TypeDef* I2Cx, const I2C_FIFOParam_t* config);
 
-void I2C_DMAWatermarkSet(I2C_TypeDef* I2Cx, I2C_DMAParam_t* config);
+void I2C_DMAWatermarkSet(I2C_TypeDef* I2Cx, const I2C_DMAParam_t* config);
 
 void I2C_DMAEnable(I2C_TypeDef* I2Cx, ctrlState_t RxCtrl, ctrlState_t TxCtrl);
 
@@ -218,7 +231,7 @@ void I2C_transmitData(I2C_TypeDef* I2Cx, uint8_t dataByte,I2C_restartStop_t cmd)
 
 uint8_t I2C_receiveData(I2C_TypeDef* I2Cx);
 
-#if IIC_REGISTERS
+#ifndef IIC_REGISTERS
 
 #define I2C0_PARAMETER *((volatile unsigned int*)(I2C0_BASE_ADDRESS + 0x04))
 #define I2C0_CONFIG0 *((volatile unsigned int*)(I2C0_BASE_ADDRESS + 0x08))
