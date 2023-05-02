@@ -17,6 +17,13 @@ typedef enum
 
 typedef enum
 {
+  I2C0_DEV = 0x00,
+  I2C1_DEV = 0x01,
+  I2C_DEV_NUM = 0x02
+}I2C_Dev_t;
+
+typedef enum
+{
   I2C_7BitAddr = 0x00,
   I2C_10BitAddr = 0x03
 }I2C_address_t;
@@ -29,9 +36,9 @@ typedef enum
 
 typedef enum
 {
-  I2C_Standard_Speed = 0x01,
-  I2C_Fast_Speed = 0x02,
-  I2C_High_Speed = 0x03
+  I2C_Standard = 0x01,
+  I2C_Fast = 0x02,
+  I2C_High = 0x03
 }I2C_speed_t;
 
 typedef enum
@@ -75,6 +82,18 @@ typedef struct
   uint32_t DMA_RXFIFO_WATERMARK;
   uint32_t DMA_TXFIFO_WATERMARK;
 }I2C_DMAParam_t;
+
+typedef struct
+{
+  uint16_t SDA_TxHoldTime;
+  uint16_t SDA_RxHoldTime;
+}I2C_holdTimeParam_t;
+
+typedef struct
+{
+  uint32_t SCL_Low_Count;
+  uint32_t SCL_High_Count;
+}I2C_SCLCountParam_t;
 
 typedef enum
 {
@@ -166,6 +185,16 @@ bitStatus_t I2C_flagStatus0Get(I2C_TypeDef* I2Cx, I2C_Status0_t flagBit);
 bitStatus_t I2C_flagStatus1Get(I2C_TypeDef* I2Cx, I2C_Status1_t flagBit);
 
 bitStatus_t I2C_errStatusGet(I2C_TypeDef* I2Cx, I2C_errStatus_t flagBit);
+
+void I2C_errorStatusAllClear(I2C_TypeDef* I2Cx);
+
+void I2C_SDASetupTimeConfig(I2C_TypeDef* I2Cx, uint32_t setup_time_ns,uint32_t clock_MHz);
+
+void I2C_SCLCountConfig(I2C_TypeDef* I2Cx, I2C_SCLCountParam_t* config);
+
+void I2C_SCLStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout_ns,uint32_t clock_MHz);
+
+void I2C_SDAStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout_ns,uint32_t clock_MHz);
 
 void I2C_enable(I2C_TypeDef* I2Cx,ctrlState_t state);
 

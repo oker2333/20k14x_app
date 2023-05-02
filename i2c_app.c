@@ -40,7 +40,7 @@ I2C_config_t masterConfig =
 {
   I2C_7BitAddr,
   I2C_MASTER_ADDR,
-  I2C_Standard_Speed,
+  I2C_Standard,
   Master_Slave_Mode,
   Enable
 };
@@ -49,7 +49,7 @@ I2C_config_t slaveConfig =
 {
   I2C_7BitAddr,
   I2C_SLAVE_ADDR,
-  I2C_Standard_Speed,
+  I2C_Standard,
   Master_Slave_Mode,
   Enable
 };

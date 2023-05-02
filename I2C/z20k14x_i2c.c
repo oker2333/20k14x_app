@@ -2,24 +2,22 @@
 
 #include "z20k14x_i2c.h"
 
-#define CALLBACK_ARRAY_ZISE 32
+#define I2C_INT_32BITS 32
 
-static I2C_initHandler_t i2c0_int_handler[CALLBACK_ARRAY_ZISE] = {0};
-static I2C_initHandler_t i2c1_int_handler[CALLBACK_ARRAY_ZISE] = {0};
+static I2C_initHandler_t _int_handler[I2C_DEV_NUM][I2C_INT_32BITS] = {0};
 
 void I2C_intHandlerRegister(I2C_TypeDef* I2Cx,I2C_intCtrlBit_t bit,I2C_initHandler_t callback)
 {
   if(I2Cx == I2C0)
   {
-    i2c0_int_handler[bit] = callback;
-    (void)i2c0_int_handler;
+    _int_handler[I2C0_DEV][bit] = callback;
+    (void)_int_handler;
   }
   else if(I2Cx == I2C1)
   {
-    i2c1_int_handler[bit] = callback;
-    (void)i2c1_int_handler;
+    _int_handler[I2C1_DEV][bit] = callback;
+    (void)_int_handler;
   }
-
 }
 
 void I2C0_IRQHandler(void)
@@ -28,8 +26,12 @@ void I2C0_IRQHandler(void)
   {
     if(Set == I2C_intStatusGet(I2C0, bit))
     {
-      i2c0_int_handler[bit]();
-      I2C0->STATUS0 = 0x01UL << bit;
+      _int_handler[I2C0_DEV][bit]();
+      
+      if((RX_FULL_IE != bit) && (TX_EMPTY_IE != bit))
+      {
+        I2C0->STATUS0 = 0x01UL << bit;
+      }
     }
   }
 }
@@ -40,8 +42,12 @@ void I2C1_IRQHandler(void)
   {
     if(Set == I2C_intStatusGet(I2C1, bit))
     {
-      i2c1_int_handler[bit]();
-      I2C1->STATUS0 = 0x01UL << bit;
+      _int_handler[I2C1_DEV][bit]();
+      
+      if((RX_FULL_IE != bit) && (TX_EMPTY_IE != bit))
+      {
+        I2C1->STATUS0 = 0x01UL << bit;
+      }
     }
   }
 }
@@ -83,6 +89,52 @@ bitStatus_t I2C_flagStatus1Get(I2C_TypeDef* I2Cx, I2C_Status1_t flagBit)
 bitStatus_t I2C_errStatusGet(I2C_TypeDef* I2Cx, I2C_errStatus_t flagBit)
 {
   return ((I2Cx->ERROR_STATUS & flagBit)?Set:Reset);
+}
+
+void I2C_errorStatusAllClear(I2C_TypeDef* I2Cx)
+{
+  uint32_t rd_register = I2Cx->RD_CLR_ERR_STATUS;
+  (void)rd_register;
+}
+
+void I2C_SDASetupTimeConfig(I2C_TypeDef* I2Cx, uint32_t setup_time_ns,uint32_t clock_MHz)
+{
+  I2Cx->SDA_SETUP_TIMING = (uint32_t)(setup_time_ns * clock_MHz /1000 + 1.0f);
+}
+
+void I2C_SDAHoldTimeConfig(I2C_TypeDef* I2Cx, I2C_holdTimeParam_t* config,uint32_t clock_MHz)
+{
+  I2Cx->SDA_HOLD_TIMING = ((uint8_t)(config->SDA_TxHoldTime * clock_MHz / 1000)) | (((uint8_t)(config->SDA_RxHoldTime * clock_MHz / 1000)) << 0x08);
+}
+
+void I2C_SCLCountConfig(I2C_TypeDef* I2Cx, I2C_SCLCountParam_t* config)
+{
+  I2C_speed_t speed = (I2C_speed_t)((I2Cx->CONFIG1 >> 0x06) & 0x03);
+  if(speed == I2C_Standard)
+  {
+    I2Cx->STD_SCL_LCNT = config->SCL_Low_Count;
+    I2Cx->STD_SCL_HCNT = config->SCL_High_Count;
+  }
+  else if(speed == I2C_Fast)
+  {
+    I2Cx->FST_SCL_LCNT = config->SCL_Low_Count;
+    I2Cx->FST_SCL_HCNT = config->SCL_High_Count;
+  }
+  else if(speed == I2C_High)
+  {
+    I2Cx->HS_SCL_LCNT = config->SCL_Low_Count;
+    I2Cx->HS_SCL_HCNT = config->SCL_High_Count;
+  } 
+}
+
+void I2C_SCLStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout_ns,uint32_t clock_MHz)
+{
+  I2Cx->SCL_LOW_TIMEOUT = (uint32_t)(timeout_ns * clock_MHz / 1000);
+}
+
+void I2C_SDAStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout_ns,uint32_t clock_MHz)
+{
+  I2Cx->SDA_LOW_TIMEOUT = (uint32_t)(timeout_ns * clock_MHz / 1000);
 }
 
 void I2C_enable(I2C_TypeDef* I2Cx,ctrlState_t state)
@@ -159,4 +211,3 @@ void I2C_transmitData(I2C_TypeDef* I2Cx, uint8_t dataByte,I2C_restartStop_t cmd)
 {
   I2Cx->COMMAND_DATA = (uint32_t)(dataByte | (cmd << 9));
 }
-
