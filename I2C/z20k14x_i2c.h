@@ -60,10 +60,10 @@ typedef enum
 }I2C_restartStop_t;
 
 typedef enum{
-  Normal_Dest_Addr = 0x01,
+  Single_Target_Addr = 0x01,
   General_Call_Addr = 0x02,
   Start_Byte_Addr = 0x03
-}I2C_destType_t;
+}I2C_targetAddrType_t;
 
 typedef struct
 {
@@ -185,7 +185,9 @@ typedef void (*I2C_initHandler_t)(void);
 
 void I2C_intEnable(I2C_TypeDef* I2Cx, I2C_intCtrlBit_t bit, ctrlState_t state);
 
-void I2C_intHandlerRegister(I2C_TypeDef* I2Cx,I2C_intCtrlBit_t bit,I2C_initHandler_t callback);
+void I2C_intCallbackRegister(I2C_TypeDef* I2Cx,I2C_intCtrlBit_t bit,I2C_initHandler_t callback);
+
+void I2C_intFlagClear(I2C_TypeDef* I2Cx,I2C_intCtrlBit_t bit);
 
 bitStatus_t I2C_intStatusGet(I2C_TypeDef* I2Cx, I2C_intCtrlBit_t flagBit);
 
@@ -223,7 +225,7 @@ uint32_t I2C_RxFIFOCountGet(I2C_TypeDef* I2Cx);
 
 uint32_t I2C_TxFIFOCountGet(I2C_TypeDef* I2Cx);
 
-void I2C_transmitCmd(I2C_TypeDef* I2Cx, I2C_destType_t destType, uint16_t address, uint8_t dataByte, I2C_restartStop_t cmd);
+void I2C_targetAddressSet(I2C_TypeDef* I2Cx, uint32_t target_address,I2C_targetAddrType_t type);
 
 void I2C_receiveCmd(I2C_TypeDef* I2Cx, uint16_t address, I2C_restartStop_t cmd);
 

@@ -120,7 +120,7 @@ static const uint32_t I2C_IntTable[]=
 /** @defgroup I2C_Private_FunctionDeclaration
  *  @{
  */
-static void I2C_IntHandler(I2C_Id_t i2cNo);
+void I2C_IntHandler(I2C_Id_t i2cNo);
 void I2C0_DriverIRQHandler(void);
 #if (I2C_INSTANCE_NUM == 2)
 void I2C1_DriverIRQHandler(void);
@@ -139,7 +139,7 @@ void I2C1_DriverIRQHandler(void);
  * @return none
  *
  */
-static void I2C_IntHandler(I2C_Id_t i2cNo)
+void I2C_IntHandler(I2C_Id_t i2cNo)
 {
     uint32_t intStatus;
     i2c_reg_t * I2Cx = (i2c_reg_t *)(i2cRegPtr[i2cNo]);
@@ -332,10 +332,12 @@ static void I2C_IntHandler(I2C_Id_t i2cNo)
  * @return none
  *
  */
+/*
 void I2C0_DriverIRQHandler(void)
 {
    I2C_IntHandler(I2C0_ID);
 }
+*/
 
 #if (I2C_INSTANCE_NUM == 2)
 /**
@@ -346,10 +348,12 @@ void I2C0_DriverIRQHandler(void)
  * @return none
  *
  */
+/*
 void I2C1_DriverIRQHandler(void)
 {
    I2C_IntHandler(I2C1_ID);
 }
+*/
 #endif
 
 /** @} end of group I2C_Private_Functions */

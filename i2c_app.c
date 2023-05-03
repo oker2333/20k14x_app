@@ -30,6 +30,7 @@ I2C1_SLAVE_ADDR:0x1F
 #include "z20k14x_i2c.h"
 
 #include "gpio_drv.h"
+#include "int_drv.h"
 
 #define OSC40M_ENABLE 1
 
@@ -42,12 +43,15 @@ I2C1_SLAVE_ADDR:0x1F
 #define I2C_MASTER_ADDR 0x0F
 #define I2C_SLAVE_ADDR 0x1F
 
+#define Polling_Tx 0
+#define Interrupt_Tx 1
+
 I2C_config_t masterConfig = 
 {
   I2C_7BitAddr,
   I2C_MASTER_ADDR,
   I2C_Standard,
-  Master_Slave_Mode,
+  Master_Mode,
   Enable
 };
 
@@ -56,7 +60,7 @@ I2C_config_t slaveConfig =
   I2C_7BitAddr,
   I2C_SLAVE_ADDR,
   I2C_Standard,
-  Master_Slave_Mode,
+  Slave_Mode,
   Enable
 };
 
@@ -89,6 +93,19 @@ I2C_holdTimeParam_t SDASlaveHoldTimeConfig =
   2500,
   0
 };
+
+#if Interrupt_Tx
+
+void I2C0_TxEmptyIRQHandler(void)
+{
+  if(I2C_intStatusGet(I2C0, TX_EMPTY_IE) == Set)
+  {
+    static uint8_t count = 0x00;
+    I2C_transmitData(I2C0, ++count, I2C_RESET_STOP_DIS);
+  }
+}
+
+#endif
 
 void I2C0_GPIO_init(void)
 {
@@ -170,30 +187,31 @@ int main(void)
     
     I2C_SCLHighLowDurationConfig(I2C0, &SCLDurationConfig, SYSTEM_CLOCK_FREQUENCE);
     I2C_SCLHighLowDurationConfig(I2C1, &SCLDurationConfig, SYSTEM_CLOCK_FREQUENCE);
-
-//    I2C_SDASetupTimeConfig(I2C0, 5000, SYSTEM_CLOCK_FREQUENCE);
-//    I2C_SDASetupTimeConfig(I2C1, 5000, SYSTEM_CLOCK_FREQUENCE);
     
     I2C_SDAHoldTimeConfig(I2C0, &SDAMasterHoldTimeConfig, SYSTEM_CLOCK_FREQUENCE);
     I2C_SDAHoldTimeConfig(I2C1, &SDASlaveHoldTimeConfig, SYSTEM_CLOCK_FREQUENCE);
-    
-    I2C_enable(I2C0, Enable);
-    I2C_enable(I2C1, Enable);
+
+    I2C_targetAddressSet(I2C0, I2C_SLAVE_ADDR,Single_Target_Addr);
+    I2C_targetAddressSet(I2C1, I2C_MASTER_ADDR,Single_Target_Addr);    
     
     I2C_DMAEnable(I2C0, Disable, Disable);
     I2C_DMAEnable(I2C1, Disable, Disable);
-    
-#if 1
-    /*I2C0*/
-    printf("I2C0_SDA_HOLD_TIMING = 0x%x\n", I2C0_SDA_HOLD_TIMING);
 
-    /*I2C1*/
-    printf("I2C1_SDA_HOLD_TIMING = 0x%x\n", I2C1_SDA_HOLD_TIMING);
+    I2C_enable(I2C0, Enable);
+    I2C_enable(I2C1, Enable);
+    
+#if Interrupt_Tx
+    
+    I2C_intCallbackRegister(I2C0,TX_EMPTY_IE,I2C0_TxEmptyIRQHandler);
+    I2C_intEnable(I2C0, TX_EMPTY_IE, Enable);
+    I2C_intFlagClear(I2C0, TX_EMPTY_IE);
+    INT_EnableIRQ(I2C0_IRQn);
     
 #endif
-    
-    I2C_transmitCmd(I2C0, Normal_Dest_Addr, I2C_SLAVE_ADDR, 0x00, I2C_RESET_STOP_DIS);
-    for(uint32_t count = 1;count <= 0xFF;count++)
+
+#if Polling_Tx
+        
+    for(uint32_t count = 0;count <= 0xFF;count++)
     {
       I2C_restartStop_t cmd = I2C_RESET_STOP_DIS;
       if(count == 255)
@@ -203,8 +221,10 @@ int main(void)
       while(I2C_TxFIFOCountGet(I2C0) == I2C_TX_FIFO_DEPTH);
       I2C_transmitData(I2C0, count, cmd);
     }
+    
+#endif
 
-    printf("20k14x_app I2C start.\n\n");
+    printf("20k14x_app I2C start.\n");
     
     while(1);
 }
