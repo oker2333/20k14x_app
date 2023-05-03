@@ -78,6 +78,18 @@ I2C_SCLDurationParam_t SCLDurationConfig =
   5000
 };
 
+I2C_holdTimeParam_t SDAMasterHoldTimeConfig = 
+{
+  2500,
+  0
+};
+
+I2C_holdTimeParam_t SDASlaveHoldTimeConfig = 
+{
+  2500,
+  0
+};
+
 void I2C0_GPIO_init(void)
 {
   CLK_ModuleSrc(CLK_PORTA, CLK_SRC_OSC40M);
@@ -153,22 +165,30 @@ int main(void)
     I2C_FIFOLevelSet(I2C0,&FIFOConfig);
     I2C_FIFOLevelSet(I2C1,&FIFOConfig);
     
-    I2C_DMAWatermarkSet(I2C0,&DMAConfig);
-    I2C_DMAWatermarkSet(I2C1,&DMAConfig);
+    I2C_DMAWatermarkSet(I2C0, &DMAConfig);
+    I2C_DMAWatermarkSet(I2C1, &DMAConfig);
     
-    I2C_SCLHighLowDurationConfig(I2C0, &SCLDurationConfig,SYSTEM_CLOCK_FREQUENCE);
-    I2C_SCLHighLowDurationConfig(I2C1, &SCLDurationConfig,SYSTEM_CLOCK_FREQUENCE);
+    I2C_SCLHighLowDurationConfig(I2C0, &SCLDurationConfig, SYSTEM_CLOCK_FREQUENCE);
+    I2C_SCLHighLowDurationConfig(I2C1, &SCLDurationConfig, SYSTEM_CLOCK_FREQUENCE);
 
-    I2C_enable(I2C0,Enable);
-    I2C_enable(I2C1,Enable);
+//    I2C_SDASetupTimeConfig(I2C0, 5000, SYSTEM_CLOCK_FREQUENCE);
+//    I2C_SDASetupTimeConfig(I2C1, 5000, SYSTEM_CLOCK_FREQUENCE);
     
-    I2C_DMAEnable(I2C0, Disbale, Disbale);
-    I2C_DMAEnable(I2C1, Disbale, Disbale);
+    I2C_SDAHoldTimeConfig(I2C0, &SDAMasterHoldTimeConfig, SYSTEM_CLOCK_FREQUENCE);
+    I2C_SDAHoldTimeConfig(I2C1, &SDASlaveHoldTimeConfig, SYSTEM_CLOCK_FREQUENCE);
     
-#if 0
+    I2C_enable(I2C0, Enable);
+    I2C_enable(I2C1, Enable);
     
-    printf("I2C0_STD_SCL_HCNT = 0x%x\n",I2C0_STD_SCL_HCNT);
-    printf("I2C0_STD_SCL_LCNT = 0x%x\n",I2C0_STD_SCL_LCNT);
+    I2C_DMAEnable(I2C0, Disable, Disable);
+    I2C_DMAEnable(I2C1, Disable, Disable);
+    
+#if 1
+    /*I2C0*/
+    printf("I2C0_SDA_HOLD_TIMING = 0x%x\n", I2C0_SDA_HOLD_TIMING);
+
+    /*I2C1*/
+    printf("I2C1_SDA_HOLD_TIMING = 0x%x\n", I2C1_SDA_HOLD_TIMING);
     
 #endif
     

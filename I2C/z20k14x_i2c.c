@@ -99,12 +99,18 @@ void I2C_errorStatusAllClear(I2C_TypeDef* I2Cx)
 
 void I2C_SDASetupTimeConfig(I2C_TypeDef* I2Cx, uint32_t setup_time_ns,uint32_t clock_MHz)
 {
-  I2Cx->SDA_SETUP_TIMING = (uint32_t)(setup_time_ns * clock_MHz /1000 + 1.0f);
+  uint32_t I2C_status = I2Cx->CONFIG0 & 0x01UL;
+  I2Cx->CONFIG0 &= ~0x01UL;
+  I2Cx->SDA_SETUP_TIMING = (uint32_t)(setup_time_ns * clock_MHz /1000 + 0x01);
+  I2Cx->CONFIG0 |= I2C_status;
 }
 
 void I2C_SDAHoldTimeConfig(I2C_TypeDef* I2Cx, const I2C_holdTimeParam_t* config,uint32_t clock_MHz)
 {
+  uint32_t I2C_status = I2Cx->CONFIG0 & 0x01UL;
+  I2Cx->CONFIG0 &= ~0x01UL;
   I2Cx->SDA_HOLD_TIMING = ((uint8_t)(config->SDA_TxHoldTime * clock_MHz / 1000)) | (((uint8_t)(config->SDA_RxHoldTime * clock_MHz / 1000)) << 0x08);
+  I2Cx->CONFIG0 |= I2C_status;
 }
 
 void I2C_SCLHighLowDurationConfig(I2C_TypeDef* I2Cx, const I2C_SCLDurationParam_t* config, uint32_t clock_MHz)
@@ -163,7 +169,7 @@ void I2C_enable(I2C_TypeDef* I2Cx,ctrlState_t state)
   {
     I2Cx->CONFIG0 |= 0x01UL;
   }
-  else if(state == Disbale)
+  else if(state == Disable)
   {
     I2Cx->CONFIG0 &= ~0x01UL;
   }

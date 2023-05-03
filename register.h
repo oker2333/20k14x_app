@@ -8,7 +8,7 @@
 #define __I     volatile             /*!< Defines 'read only' permissions              */
 
 typedef enum{
-  Disbale,
+  Disable,
   Enable
 }ctrlState_t;
 
