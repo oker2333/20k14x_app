@@ -25,7 +25,7 @@ void I2C_intCallbackRegister(I2C_TypeDef* I2Cx,I2C_intCtrlBit_t bit,I2C_initHand
 
 void I2C_intFlagClear(I2C_TypeDef* I2Cx,I2C_intCtrlBit_t bit)
 {
-  if((RX_FULL_IE != bit) && (TX_EMPTY_IE != bit))
+  if((I2C_RX_FULL_IE != bit) && (I2C_TX_EMPTY_IE != bit))
   {
     I2C0->STATUS0 = 0x01UL << bit;
   }
@@ -33,13 +33,13 @@ void I2C_intFlagClear(I2C_TypeDef* I2Cx,I2C_intCtrlBit_t bit)
 
 void I2C0_IRQHandler(void)
 {
-  for(I2C_intCtrlBit_t bit = I2C_CALL_IE;bit <= TX_EMPTY_IE;bit++)
+  for(I2C_intCtrlBit_t bit = I2C_CALL_IE;bit <= I2C_TX_EMPTY_IE;bit++)
   {
     if(Set == I2C_intStatusGet(I2C0, bit))
     {
       _int_handler[I2C0_DEV][bit]();
       
-      if((RX_FULL_IE != bit) && (TX_EMPTY_IE != bit))
+      if((I2C_RX_FULL_IE != bit) && (I2C_TX_EMPTY_IE != bit))
       {
         I2C0->STATUS0 = 0x01UL << bit;
       }
@@ -49,13 +49,13 @@ void I2C0_IRQHandler(void)
 
 void I2C1_IRQHandler(void)
 {
-  for(I2C_intCtrlBit_t bit = I2C_CALL_IE;bit <= TX_EMPTY_IE;bit++)
+  for(I2C_intCtrlBit_t bit = I2C_CALL_IE;bit <= I2C_TX_EMPTY_IE;bit++)
   {
     if(Set == I2C_intStatusGet(I2C1, bit))
     {
       _int_handler[I2C1_DEV][bit]();
       
-      if((RX_FULL_IE != bit) && (TX_EMPTY_IE != bit))
+      if((I2C_RX_FULL_IE != bit) && (I2C_TX_EMPTY_IE != bit))
       {
         I2C1->STATUS0 = 0x01UL << bit;
       }

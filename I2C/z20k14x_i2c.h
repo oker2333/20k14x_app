@@ -171,14 +171,14 @@ typedef enum
   I2C_ACTIVITY_DET_IE = 3,
   I2C_STOP_DET_IE = 4,
   I2C_START_DET_IE = 5,
-  SLAVE_RD_REQ_IE = 22,
-  RX_DONE_IE = 23,
-  RX_UNDER_IE = 24,
-  RX_OVF_IE = 25,
-  RESTART_DET_IE = 26,
-  SCL_STUCK_AT_LOW_IE =27,
-  RX_FULL_IE = 30,
-  TX_EMPTY_IE = 31
+  I2C_SLAVE_RD_REQ_IE = 22,
+  I2C_RX_DONE_IE = 23,
+  I2C_RX_UNDER_IE = 24,
+  I2C_RX_OVF_IE = 25,
+  I2C_RESTART_DET_IE = 26,
+  I2C_SCL_STUCK_AT_LOW_IE =27,
+  I2C_RX_FULL_IE = 30,
+  I2C_TX_EMPTY_IE = 31
 }I2C_intCtrlBit_t;
 
 typedef void (*I2C_initHandler_t)(void);

@@ -2169,26 +2169,77 @@
     <group>
         <name>Device</name>
         <file>
+            <name>$PROJ_DIR$\..\register.h</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\..\Device\Z20K148M_startup.s</name>
         </file>
     </group>
     <group>
-        <name>I2C</name>
+        <name>I2C_APP</name>
+        <group>
+            <name>I2C</name>
+            <file>
+                <name>$PROJ_DIR$\..\I2C\z20k14x_i2c.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\I2C\z20k14x_i2c.h</name>
+            </file>
+        </group>
         <file>
-            <name>$PROJ_DIR$\..\I2C\z20k14x_i2c.c</name>
+            <name>$PROJ_DIR$\..\i2c_dma_rx_dma_tx.c</name>
+            <excluded>
+                <configuration>Debug</configuration>
+            </excluded>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\I2C\z20k14x_i2c.h</name>
+            <name>$PROJ_DIR$\..\i2c_dma_rx_int_tx.c</name>
+            <excluded>
+                <configuration>Debug</configuration>
+            </excluded>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\i2c_dma_rx_polling_tx.c</name>
+            <excluded>
+                <configuration>Debug</configuration>
+            </excluded>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\i2c_int_rx_int_tx.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\i2c_int_rx_polling_tx.c</name>
+            <excluded>
+                <configuration>Debug</configuration>
+            </excluded>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\i2c_polling_rx_int_tx.c</name>
+            <excluded>
+                <configuration>Debug</configuration>
+            </excluded>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\i2c_polling_rx_polling_tx.c</name>
+            <excluded>
+                <configuration>Debug</configuration>
+            </excluded>
         </file>
     </group>
     <group>
-        <name>I2S</name>
+        <name>I2S_APP</name>
+        <group>
+            <name>I2S</name>
+        </group>
     </group>
     <group>
-        <name>SCM</name>
+        <name>SCM_APP</name>
+        <group>
+            <name>SCM</name>
+        </group>
     </group>
     <group>
-        <name>StdDriver</name>
+        <name>STD_Driver</name>
         <file>
             <name>$PROJ_DIR$\..\StdDriver\Src\adc_drv.c</name>
         </file>
@@ -2287,6 +2338,12 @@
         </file>
     </group>
     <group>
+        <name>TIMER_APP</name>
+        <group>
+            <name>TIMER</name>
+        </group>
+    </group>
+    <group>
         <name>Tools</name>
         <file>
             <name>$PROJ_DIR$\..\TOOL\clock_config.c</name>
@@ -2307,28 +2364,13 @@
             <name>$PROJ_DIR$\..\TOOL\write.c</name>
         </file>
     </group>
+    <group>
+        <name>UART_APP</name>
+        <group>
+            <name>UART</name>
+        </group>
+    </group>
     <file>
-        <name>$PROJ_DIR$\..\i2c_app.c</name>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\..\i2s_app.c</name>
-        <excluded>
-            <configuration>Debug</configuration>
-        </excluded>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\..\register.h</name>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\..\scm_app.c</name>
-        <excluded>
-            <configuration>Debug</configuration>
-        </excluded>
-    </file>
-    <file>
-        <name>$PROJ_DIR$\..\timer_app.c</name>
-        <excluded>
-            <configuration>Debug</configuration>
-        </excluded>
+        <name>$PROJ_DIR$\..\20k14x_app.c</name>
     </file>
 </project>

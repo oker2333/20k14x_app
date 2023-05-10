@@ -13,14 +13,12 @@ I2C0_MASTER_ADDR:0x0F
 7-bit address
 
 
-
 I2C1
 I2C1_SCL --- PTA0
 I2C1_SDA --- PTA1
 mode:Slave
 I2C1_SLAVE_ADDR:0x1F
 7-bit address
-
 
 */
 
@@ -139,6 +137,7 @@ void I2C1_GPIO_init(void)
 
 void I2C0_init(void)
 {
+  CLK_SetClkDivider(CLK_I2C0, CLK_DIV_1);
   CLK_ModuleSrc(CLK_I2C0, CLK_SRC_OSC40M);
   SYSCTRL_EnableModule(SYSCTRL_I2C0);
   
@@ -147,6 +146,7 @@ void I2C0_init(void)
 
 void I2C1_init(void)
 {
+  CLK_SetClkDivider(CLK_I2C1, CLK_DIV_1);
   CLK_ModuleSrc(CLK_I2C1, CLK_SRC_OSC40M);
   SYSCTRL_EnableModule(SYSCTRL_I2C1);
   
@@ -210,7 +210,7 @@ int main(void)
 #endif
 
 #if Polling_Tx
-        
+
     for(uint32_t count = 0;count <= 0xFF;count++)
     {
       I2C_restartStop_t cmd = I2C_RESET_STOP_DIS;
