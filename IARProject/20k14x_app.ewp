@@ -2206,12 +2206,18 @@
         </file>
         <file>
             <name>$PROJ_DIR$\..\i2c_int_rx_int_tx.c</name>
+            <excluded>
+                <configuration>Debug</configuration>
+            </excluded>
         </file>
         <file>
             <name>$PROJ_DIR$\..\i2c_int_rx_polling_tx.c</name>
             <excluded>
                 <configuration>Debug</configuration>
             </excluded>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\i2c_ip_learner.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\i2c_polling_rx_int_tx.c</name>
@@ -2221,6 +2227,24 @@
         </file>
         <file>
             <name>$PROJ_DIR$\..\i2c_polling_rx_polling_tx.c</name>
+            <excluded>
+                <configuration>Debug</configuration>
+            </excluded>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\vl6180x_driver.c</name>
+            <excluded>
+                <configuration>Debug</configuration>
+            </excluded>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\vl6180x_driver.h</name>
+            <excluded>
+                <configuration>Debug</configuration>
+            </excluded>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\vl6180x_driver_app.c</name>
             <excluded>
                 <configuration>Debug</configuration>
             </excluded>
@@ -2350,6 +2374,12 @@
         </file>
         <file>
             <name>$PROJ_DIR$\..\TOOL\clock_config.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\TOOL\parity_bit.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\TOOL\parity_bit.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\TOOL\read.c</name>

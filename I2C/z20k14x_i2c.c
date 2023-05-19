@@ -134,7 +134,7 @@ void I2C_SDAHoldTimeConfig(I2C_TypeDef* I2Cx, const I2C_holdTimeParam_t* config,
 {
   uint32_t I2C_status = I2Cx->CONFIG0 & 0x01UL;
   I2Cx->CONFIG0 &= ~0x01UL;
-  I2Cx->SDA_HOLD_TIMING = ((uint8_t)(config->SDA_TxHoldTime * clock_MHz / 1000)) | (((uint8_t)(config->SDA_RxHoldTime * clock_MHz / 1000)) << 0x08);
+  I2Cx->SDA_HOLD_TIMING = (config->SDA_TxHoldTime * clock_MHz / 1000) | ((config->SDA_RxHoldTime * clock_MHz / 1000) << 0x10);
   I2Cx->CONFIG0 |= I2C_status;
 }
 
@@ -248,15 +248,6 @@ void I2C_targetAddressSet(I2C_TypeDef* I2Cx, uint32_t target_address,I2C_targetA
   I2Cx->CONFIG0 |= I2C_status;
 }
 
-void I2C_receiveCmd(I2C_TypeDef* I2Cx, uint16_t address, I2C_restartStop_t cmd)
-{
-  I2Cx->CONFIG0 &= ~0x01UL;
-  I2Cx->DEST_ADDR = ((address & 0x3FF) | (0x00UL << 0x0A));
-  I2Cx->CONFIG0 |= 0x01UL;
-  
-  I2Cx->COMMAND_DATA = (uint32_t)(0x00UL | (cmd << 9) | (0x01UL << 8));
-}
-
 uint8_t I2C_receiveData(I2C_TypeDef* I2Cx)
 {
   return (uint8_t)(I2Cx->COMMAND_DATA & 0xFF);
@@ -265,4 +256,26 @@ uint8_t I2C_receiveData(I2C_TypeDef* I2Cx)
 void I2C_transmitData(I2C_TypeDef* I2Cx, uint8_t dataByte,I2C_restartStop_t cmd)
 {
   I2Cx->COMMAND_DATA = (uint32_t)(dataByte | (cmd << 9));
+}
+
+/****************************************************************/
+
+void I2C_receiveDirection(I2C_TypeDef* I2Cx,I2C_recvOperate_t opt)
+{
+  I2Cx->COMMAND_DATA |= (((opt == ACK)?I2C_RESET_STOP_DIS:I2C_STOP_EN) << 9) | (0x01UL << 8);
+}
+
+void I2C_masterACK(I2C_TypeDef* I2Cx)
+{
+  I2Cx->COMMAND_DATA = (uint32_t)(0x00UL | (I2C_RESET_STOP_DIS << 9) | (0x01UL << 8));
+}
+
+void I2C_masterNACK(I2C_TypeDef* I2Cx)
+{
+  I2Cx->COMMAND_DATA = (uint32_t)(0x00UL | (I2C_STOP_EN << 9) | (0x01UL << 8));
+}
+
+void I2C_slaveNACK(I2C_TypeDef* I2Cx)
+{
+  I2Cx->CONFIG0 |= 0x01UL << 2;
 }

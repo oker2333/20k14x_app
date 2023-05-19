@@ -60,6 +60,11 @@ typedef enum
 }I2C_restartStop_t;
 
 typedef enum{
+  NACK = 0x00,
+  ACK
+}I2C_recvOperate_t;
+
+typedef enum{
   Single_Target_Addr = 0x01,
   General_Call_Addr = 0x02,
   Start_Byte_Addr = 0x03
@@ -227,11 +232,18 @@ uint32_t I2C_TxFIFOCountGet(I2C_TypeDef* I2Cx);
 
 void I2C_targetAddressSet(I2C_TypeDef* I2Cx, uint32_t target_address,I2C_targetAddrType_t type);
 
-void I2C_receiveCmd(I2C_TypeDef* I2Cx, uint16_t address, I2C_restartStop_t cmd);
-
 void I2C_transmitData(I2C_TypeDef* I2Cx, uint8_t dataByte,I2C_restartStop_t cmd);
 
 uint8_t I2C_receiveData(I2C_TypeDef* I2Cx);
+
+void I2C_receiveDirection(I2C_TypeDef* I2Cx,I2C_recvOperate_t opt);
+
+void I2C_masterACK(I2C_TypeDef* I2Cx);
+
+void I2C_masterNACK(I2C_TypeDef* I2Cx);
+
+void I2C_slaveNACK(I2C_TypeDef* I2Cx);
+
 
 #ifndef IIC_REGISTERS
 
