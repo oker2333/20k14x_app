@@ -62,7 +62,7 @@ typedef enum
 typedef enum{
   NACK = 0x00,
   ACK
-}I2C_recvOperate_t;
+}I2C_recvOpt_t;
 
 typedef enum{
   Single_Target_Addr = 0x01,
@@ -76,7 +76,6 @@ typedef struct
   uint32_t localAddr;
   I2C_speed_t speedMode;
   I2C_mode_t masterSlaveMode;
-  ctrlState_t restart;
 }I2C_config_t;
 
 typedef struct
@@ -212,9 +211,9 @@ void I2C_SCLHighLowDurationConfig(I2C_TypeDef* I2Cx, const I2C_SCLDurationParam_
 
 void I2C_spikeSuppressionLimitConfig (I2C_TypeDef* I2Cx, const I2C_SpikeLengthParam_t* config);
 
-void I2C_SCLStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout_ns,uint32_t clock_MHz);
+void I2C_SCLStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout,uint32_t clock_MHz);
 
-void I2C_SDAStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout_ns,uint32_t clock_MHz);
+void I2C_SDAStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout,uint32_t clock_MHz);
 
 void I2C_enable(I2C_TypeDef* I2Cx,ctrlState_t state);
 
@@ -236,14 +235,21 @@ void I2C_transmitData(I2C_TypeDef* I2Cx, uint8_t dataByte,I2C_restartStop_t cmd)
 
 uint8_t I2C_receiveData(I2C_TypeDef* I2Cx);
 
-void I2C_receiveDirection(I2C_TypeDef* I2Cx,I2C_recvOperate_t opt);
+void I2C_receiveDirection(I2C_TypeDef* I2Cx,I2C_recvOpt_t opt);
 
-void I2C_masterACK(I2C_TypeDef* I2Cx);
+void I2C_masterACK(I2C_TypeDef* I2Cx,ctrlState_t state);
 
-void I2C_masterNACK(I2C_TypeDef* I2Cx);
+void I2C_slaveACK(I2C_TypeDef* I2Cx,ctrlState_t state);
 
-void I2C_slaveNACK(I2C_TypeDef* I2Cx);
+void I2C_masterTransferAbort(I2C_TypeDef* I2Cx);
 
+uint32_t I2C_AllErrorStatusClear(I2C_TypeDef* I2Cx);
+
+retState_t I2C_masterBlockTxFIFO(I2C_TypeDef* I2Cx);
+
+void I2C0_registerPrint(void);
+
+void I2C1_registerPrint(void);
 
 #ifndef IIC_REGISTERS
 

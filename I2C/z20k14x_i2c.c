@@ -2,6 +2,12 @@
 
 #include "z20k14x_i2c.h"
 
+static I2C_Reg_t* const i2cRegWPtr[I2C_DEV_NUM] = 
+{
+    I2C0_base_addr,
+    I2C1_base_addr
+};
+
 #define I2C_INT_32BITS 32
 
 static I2C_initHandler_t _int_handler[I2C_DEV_NUM][I2C_INT_32BITS] = {0};
@@ -14,13 +20,12 @@ void I2C_intCallbackRegister(I2C_TypeDef* I2Cx,I2C_intCtrlBit_t bit,I2C_initHand
   if(I2Cx == I2C0)
   {
     _int_handler[I2C0_DEV][bit] = callback;
-    (void)_int_handler;
   }
   else if(I2Cx == I2C1)
   {
     _int_handler[I2C1_DEV][bit] = callback;
-    (void)_int_handler;
   }
+  (void)_int_handler;
 }
 
 void I2C_intFlagClear(I2C_TypeDef* I2Cx,I2C_intCtrlBit_t bit)
@@ -141,8 +146,9 @@ void I2C_SDAHoldTimeConfig(I2C_TypeDef* I2Cx, const I2C_holdTimeParam_t* config,
 void I2C_SCLHighLowDurationConfig(I2C_TypeDef* I2Cx, const I2C_SCLDurationParam_t* config, uint32_t clock_MHz)
 {
   uint32_t I2C_status = I2Cx->CONFIG0 & 0x01UL;
-  uint32_t low_duration = config->SCL_Low_Duration * clock_MHz / 1000;
-  uint32_t high_duration = config->SCL_High_Duration * clock_MHz / 1000;
+  uint32_t spike_count = ((I2Cx->CONFIG1 & (0x03 << 6)) == 0x03)?I2Cx->HS_SPKCNT:I2Cx->FSTD_SPKCNT;
+  uint32_t low_duration = config->SCL_Low_Duration * clock_MHz / 1000 - 1;
+  uint32_t high_duration = config->SCL_High_Duration * clock_MHz / 1000 - spike_count - 7;
   const uint32_t scl_high_count = 65525UL;
   
   I2Cx->CONFIG0 &= ~0x01UL;
@@ -178,14 +184,14 @@ void I2C_spikeSuppressionLimitConfig (I2C_TypeDef* I2Cx, const I2C_SpikeLengthPa
   I2Cx->CONFIG0 |= I2C_status;
 }
 
-void I2C_SCLStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout_ns,uint32_t clock_MHz)
+void I2C_SCLStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout,uint32_t clock_MHz)             //unit:ns
 {
-  I2Cx->SCL_LOW_TIMEOUT = (uint32_t)(timeout_ns * clock_MHz / 1000);
+  I2Cx->SCL_LOW_TIMEOUT = (uint32_t)(timeout * clock_MHz / 1000);
 }
 
-void I2C_SDAStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout_ns,uint32_t clock_MHz)
+void I2C_SDAStuckLowTimeout(I2C_TypeDef* I2Cx, uint32_t timeout,uint32_t clock_MHz)             //unit:ns
 {
-  I2Cx->SDA_LOW_TIMEOUT = (uint32_t)(timeout_ns * clock_MHz / 1000);
+  I2Cx->SDA_LOW_TIMEOUT = (uint32_t)(timeout * clock_MHz / 1000);
 }
 
 void I2C_enable(I2C_TypeDef* I2Cx,ctrlState_t state)
@@ -202,10 +208,13 @@ void I2C_enable(I2C_TypeDef* I2Cx,ctrlState_t state)
 
 void I2C_init(I2C_TypeDef* I2Cx, const I2C_config_t* config)
 {
+  (void)i2cRegWPtr;
+  
   uint32_t I2C_status = I2Cx->CONFIG0 & 0x01UL;  
   I2Cx->CONFIG0 &= ~0x01UL;
   
-  I2Cx->CONFIG1 = config->masterSlaveMode | (config->restart << 0x02) | (config->speedMode << 0x06) | (config->addrBitMode << 0x09);
+  I2Cx->CONFIG0 |= 0x01UL << 5;
+  I2Cx->CONFIG1 = (config->masterSlaveMode << 0) | 0x013CUL | (config->speedMode << 6) | (config->addrBitMode << 9);
   I2Cx->SLAVE_ADDR = config->localAddr;
   I2Cx->INT_ENABLE = ((I2Cx == I2C0)?(_interrupt_mask0 = 0x00UL):(_interrupt_mask1 = 0x00UL));
     
@@ -258,24 +267,114 @@ void I2C_transmitData(I2C_TypeDef* I2Cx, uint8_t dataByte,I2C_restartStop_t cmd)
   I2Cx->COMMAND_DATA = (uint32_t)(dataByte | (cmd << 9));
 }
 
-/****************************************************************/
-
-void I2C_receiveDirection(I2C_TypeDef* I2Cx,I2C_recvOperate_t opt)
+void I2C_receiveDirection(I2C_TypeDef* I2Cx,I2C_recvOpt_t opt)
 {
-  I2Cx->COMMAND_DATA |= (((opt == ACK)?I2C_RESET_STOP_DIS:I2C_STOP_EN) << 9) | (0x01UL << 8);
+  I2Cx->COMMAND_DATA = (((opt == ACK)?I2C_RESET_EN:I2C_STOP_EN) << 9) | (0x01UL << 8);
 }
 
-void I2C_masterACK(I2C_TypeDef* I2Cx)
+void I2C_masterACK(I2C_TypeDef* I2Cx,ctrlState_t state)
 {
-  I2Cx->COMMAND_DATA = (uint32_t)(0x00UL | (I2C_RESET_STOP_DIS << 9) | (0x01UL << 8));
+  I2Cx->COMMAND_DATA = (((state == Enable)?I2C_RESET_STOP_DIS:I2C_STOP_EN) << 9) | (0x01UL << 8);
 }
 
-void I2C_masterNACK(I2C_TypeDef* I2Cx)
+void I2C_slaveACK(I2C_TypeDef* I2Cx,ctrlState_t state)
 {
-  I2Cx->COMMAND_DATA = (uint32_t)(0x00UL | (I2C_STOP_EN << 9) | (0x01UL << 8));
+  uint32_t config = state?(I2Cx->CONFIG0 & ~(0x01 << 2)):(I2Cx->CONFIG0 | (0x01 << 2));
+  
+  if(I2Cx->STATUS1 & (0x01UL << 1))
+  {
+    I2Cx->CONFIG0 &= ~0x01UL;
+    I2Cx->CONFIG0 = config;
+    I2Cx->CONFIG0 |= 0x01UL;
+  }
+  else
+  {
+    I2Cx->CONFIG0 = config;
+  }
 }
 
-void I2C_slaveNACK(I2C_TypeDef* I2Cx)
+void I2C_masterTransferAbort(I2C_TypeDef* I2Cx)
 {
-  I2Cx->CONFIG0 |= 0x01UL << 2;
+  I2Cx->CONFIG0 |= 0x01UL << 4;
+}
+
+uint32_t I2C_AllErrorStatusClear(I2C_TypeDef* I2Cx)
+{
+  return I2Cx->RD_CLR_ERR_STATUS;
+}
+
+retState_t I2C_masterBlockTxFIFO(I2C_TypeDef* I2Cx)
+{
+  retState_t status = FALSE;
+  if(((I2Cx->STATUS1 & 0x01UL) == 0x00) && (I2Cx->TX_FIFO_CNT == 0x00))
+  {
+    I2Cx->CONFIG0 |= 0x01UL << 6;
+    status = TRUE;
+  }
+  return status;
+}
+
+
+void I2C0_registerPrint(void)
+{
+  printf("\n");
+  printf("I2C0_PARAMETER = 0x%x\n",I2C0_PARAMETER);
+  printf("I2C0_CONFIG0 = 0x%x\n",I2C0_CONFIG0);
+  printf("I2C0_CONFIG1 = 0x%x\n",I2C0_CONFIG1);
+  printf("I2C0_SDA_SETUP_TIMING = 0x%x\n",I2C0_SDA_SETUP_TIMING);
+  printf("I2C0_SDA_HOLD_TIMING = 0x%x\n",I2C0_SDA_HOLD_TIMING);
+  printf("I2C0_DMA_CTRL = 0x%x\n",I2C0_DMA_CTRL);
+  printf("I2C0_INT_ENABLE = 0x%x\n",I2C0_INT_ENABLE);
+  printf("I2C0_DEST_ADDR = 0x%x\n",I2C0_DEST_ADDR);
+  printf("I2C0_SLAVE_ADDR = 0x%x\n",I2C0_SLAVE_ADDR);
+  printf("I2C0_STD_SCL_HCNT = 0x%x\n",I2C0_STD_SCL_HCNT);
+  printf("I2C0_STD_SCL_LCNT = 0x%x\n",I2C0_STD_SCL_LCNT);
+  printf("I2C0_FST_SCL_HCNT = 0x%x\n",I2C0_FST_SCL_HCNT);
+  printf("I2C0_FST_SCL_LCNT = 0x%x\n",I2C0_FST_SCL_LCNT);
+  printf("I2C0_HS_SCL_HCNT = 0x%x\n",I2C0_HS_SCL_HCNT);
+  printf("I2C0_HS_SCL_LCNT = 0x%x\n",I2C0_HS_SCL_LCNT);
+  printf("I2C0_RXFIFO_WATER_MARK = 0x%x\n",I2C0_RXFIFO_WATER_MARK);
+  printf("I2C0_TXFIFO_WATER_MARK = 0x%x\n",I2C0_TXFIFO_WATER_MARK);
+  printf("I2C0_TX_FIFO_CNT = 0x%x\n",I2C0_TX_FIFO_CNT);
+  printf("I2C0_RX_FIFO_CNT = 0x%x\n",I2C0_RX_FIFO_CNT);
+  printf("I2C0_FSTD_SPKCNT = 0x%x\n",I2C0_FSTD_SPKCNT);
+  printf("I2C0_HS_SPKCNT = 0x%x\n",I2C0_HS_SPKCNT);
+  printf("I2C0_STATUS0 = 0x%x\n",I2C0_STATUS0);
+  printf("I2C0_STATUS1 = 0x%x\n",I2C0_STATUS1);
+  printf("I2C0_ERROR_STATUS = 0x%x\n",I2C0_ERROR_STATUS);
+  printf("I2C0_SCL_LOW_TIMEOUT = 0x%x\n",I2C0_SCL_LOW_TIMEOUT);
+  printf("I2C0_SDA_LOW_TIMEOUT = 0x%x\n",I2C0_SDA_LOW_TIMEOUT);
+  printf("\n");
+}
+
+void I2C1_registerPrint(void)
+{
+  printf("\n");
+  printf("I2C1_PARAMETER = 0x%x\n",I2C1_PARAMETER);
+  printf("I2C1_CONFIG0 = 0x%x\n",I2C1_CONFIG0);
+  printf("I2C1_CONFIG1 = 0x%x\n",I2C1_CONFIG1);
+  printf("I2C1_SDA_SETUP_TIMING = 0x%x\n",I2C1_SDA_SETUP_TIMING);
+  printf("I2C1_SDA_HOLD_TIMING = 0x%x\n",I2C1_SDA_HOLD_TIMING);
+  printf("I2C1_DMA_CTRL = 0x%x\n",I2C1_DMA_CTRL);
+  printf("I2C1_INT_ENABLE = 0x%x\n",I2C1_INT_ENABLE);
+  printf("I2C1_DEST_ADDR = 0x%x\n",I2C1_DEST_ADDR);
+  printf("I2C1_SLAVE_ADDR = 0x%x\n",I2C1_SLAVE_ADDR);
+  printf("I2C1_STD_SCL_HCNT = 0x%x\n",I2C1_STD_SCL_HCNT);
+  printf("I2C1_STD_SCL_LCNT = 0x%x\n",I2C1_STD_SCL_LCNT);
+  printf("I2C1_FST_SCL_HCNT = 0x%x\n",I2C1_FST_SCL_HCNT);
+  printf("I2C1_FST_SCL_LCNT = 0x%x\n",I2C1_FST_SCL_LCNT);
+  printf("I2C1_HS_SCL_HCNT = 0x%x\n",I2C1_HS_SCL_HCNT);
+  printf("I2C1_HS_SCL_LCNT = 0x%x\n",I2C1_HS_SCL_LCNT);
+  printf("I2C1_RXFIFO_WATER_MARK = 0x%x\n",I2C1_RXFIFO_WATER_MARK);
+  printf("I2C1_TXFIFO_WATER_MARK = 0x%x\n",I2C1_TXFIFO_WATER_MARK);
+  printf("I2C1_TX_FIFO_CNT = 0x%x\n",I2C1_TX_FIFO_CNT);
+  printf("I2C1_RX_FIFO_CNT = 0x%x\n",I2C1_RX_FIFO_CNT);
+  printf("I2C1_FSTD_SPKCNT = 0x%x\n",I2C1_FSTD_SPKCNT);
+  printf("I2C1_HS_SPKCNT = 0x%x\n",I2C1_HS_SPKCNT);
+  printf("I2C1_STATUS0 = 0x%x\n",I2C1_STATUS0);
+  printf("I2C1_STATUS1 = 0x%x\n",I2C1_STATUS1);
+  printf("I2C1_ERROR_STATUS = 0x%x\n",I2C1_ERROR_STATUS);
+  printf("I2C1_SCL_LOW_TIMEOUT = 0x%x\n",I2C1_SCL_LOW_TIMEOUT);
+  printf("I2C1_SDA_LOW_TIMEOUT = 0x%x\n",I2C1_SDA_LOW_TIMEOUT);
+  printf("\n");
 }

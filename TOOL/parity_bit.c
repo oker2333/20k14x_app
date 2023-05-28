@@ -131,3 +131,75 @@ void Dword_parityBitGenerate(uint32_t* data_dword)
     *data_dword &= ~(0x01UL << 31);
   }
 }
+
+#if test
+
+#include <math.h>
+
+void dword_parity_test(void)
+{
+  for(long long i = 0;i < pow(2,(8 * sizeof(int32_t)));i++)
+  {
+    static int32_t value = 0x00;
+    uint32_t value_parity = value;
+    
+    Dword_parityBitGenerate(&value_parity);
+    
+    if(!Dword_parityBitCheck(value_parity))
+    {
+      printf("[dword_parity_test]error value = 0x%x,value_parity = 0x%x\n",value,value_parity);
+    }
+    else
+    {
+      printf("[dword_parity_test]correct value = 0x%x,value_parity = 0x%x\n",value,value_parity);
+    }
+    value++;
+  }
+}
+
+void word_parity_test(void)
+{
+  for(int i = 0;i < pow(2, (8 * sizeof(int16_t)));i++)
+  {
+    static int16_t value = 0x00;
+    uint16_t value_parity = value;
+    
+    Word_parityBitGenerate(&value_parity);
+    
+    if(!Word_parityBitCheck(value_parity))
+    {
+      printf("[word_parity_test]error value = 0x%x,value_parity = 0x%x\n",value,value_parity);
+    }
+    else
+    {
+      printf("[word_parity_test]correct value = 0x%x,value_parity = 0x%x\n",value,value_parity);
+    }
+    
+    value++;
+  }
+}
+
+void Byte_parity_test(void)
+{
+  for(int i = 0;i < pow(2, (8 * sizeof(int8_t)));i++)
+  {
+    static int8_t value = 0x00;
+    uint8_t value_parity = value;
+    
+    Byte_parityBitGenerate(&value_parity);
+    
+    if(!Byte_parityBitCheck(value_parity))
+    {
+      printf("[Byte_parity_test]error value = 0x%x,value_parity = 0x%x\n",value,value_parity);
+    }
+    else
+    {
+      printf("[Byte_parity_test]correct value = 0x%x,value_parity = 0x%x\n",value,value_parity);
+    }
+    
+    value++;
+  }
+}
+
+#endif
+
