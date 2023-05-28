@@ -42,6 +42,9 @@ I2C1_SLAVE_ADDR:0x1F
 #define I2C_MASTER_DEV  I2C0
 #define I2C_SLAVE_DEV   I2C1
 
+#define I2C_MASTER_REG  I2C0_base_addr
+#define I2C_SLAVE_REG   I2C1_base_addr
+
 #define I2C_MASTER_CLK  CLK_I2C0
 #define I2C_SLAVE_CLK   CLK_I2C1
 
@@ -53,6 +56,9 @@ I2C1_SLAVE_ADDR:0x1F
 
 static I2C_TypeDef * I2C_Master = I2C_MASTER_DEV;
 static I2C_TypeDef * I2C_Slave = I2C_SLAVE_DEV;
+
+static I2C_Reg_t * I2C_Master_Viewer = I2C_MASTER_REG;
+static I2C_Reg_t * I2C_Slave_Viewer = I2C_SLAVE_REG;
 
 I2C_config_t masterConfig = 
 {
@@ -279,6 +285,8 @@ void I2C_Master_init(void)
   SYSCTRL_EnableModule(I2C_MASTER_SYSCTRL);
   
   I2C_init(I2C_MASTER_DEV, &masterConfig);
+  
+  (void)I2C_Master_Viewer->I2C_PARAMETER;
 }
 
 void I2C_Slave_init(void)
@@ -289,6 +297,8 @@ void I2C_Slave_init(void)
   SYSCTRL_EnableModule(I2C_SLAVE_SYSCTRL);
   
   I2C_init(I2C_SLAVE_DEV, &slaveConfig);
+  
+  (void)I2C_Slave_Viewer->I2C_PARAMETER;
 }
 
 /******I2C DMA Init******/
