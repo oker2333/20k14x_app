@@ -5,10 +5,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define test 1
+#define test 0
 
 bool Byte_parityBitCheck(uint8_t data_byte);
-void Byte_parityBitGenerate(uint8_t* data_byte);
+uint8_t Byte_parityBitGenerate(uint8_t data_byte);
 
 bool Word_parityBitCheck(uint16_t data_word);
 void Word_parityBitGenerate(uint16_t* data_word);

@@ -42,8 +42,17 @@ I2C1_SLAVE_ADDR:0x1F
 #define I2C_MASTER_DEV  I2C0
 #define I2C_SLAVE_DEV   I2C1
 
+#define I2C_MASTER_CLK  CLK_I2C0
+#define I2C_SLAVE_CLK   CLK_I2C1
+
+#define I2C_MASTER_SYSCTRL  SYSCTRL_I2C0
+#define I2C_SLAVE_SYSCTRL   SYSCTRL_I2C1
+
 #define I2C_MASTER_ADDR 0x0F
-#define I2C_SLAVE_ADDR 0x1F
+#define I2C_SLAVE_ADDR  0x1F
+
+static I2C_TypeDef * I2C_Master = I2C_MASTER_DEV;
+static I2C_TypeDef * I2C_Slave = I2C_SLAVE_DEV;
 
 I2C_config_t masterConfig = 
 {
@@ -73,7 +82,7 @@ I2C_DMAParam_t DMAConfig =
   3
 };
 
-#define SCL_DURATION_CNT 50000
+#define SCL_DURATION_CNT 5000
 
 I2C_SCLDurationParam_t SCLDurationConfig = 
 {
@@ -84,44 +93,53 @@ I2C_SCLDurationParam_t SCLDurationConfig =
 I2C_holdTimeParam_t SDAMasterHoldTimeConfig = 
 {
   SCL_DURATION_CNT/2,
-  0
+  SCL_DURATION_CNT/5
 };
 
 I2C_holdTimeParam_t SDASlaveHoldTimeConfig = 
 {
   SCL_DURATION_CNT/2,
-  0
+  SCL_DURATION_CNT/5
 };
 
 I2C_SpikeLengthParam_t spike_config = 
 {
-  SCL_DURATION_CNT*2/100,
-  SCL_DURATION_CNT*2/100
+  5,
+  5
 };
 
-static uint32_t master_error_flag = 0x00;
-static uint32_t slave_error_flag = 0x00;
+/******I2C Master IRQ Handler******/
 
-void I2C_Master_ErrorAbortIRQHandler(void)
+void I2C_Master_RxFullIRQHandler(void)
 {
-  master_error_flag++;
-  printf("I2C0_ERROR_STATUS = 0x%x\n",I2C0_ERROR_STATUS);
-  I2C_AllErrorStatusClear(I2C_MASTER_DEV);
-
+  if(I2C_intStatusGet(I2C_MASTER_DEV, I2C_RX_FULL_IE) == Set)
+  {
+    while(I2C_RxFIFOCountGet(I2C_MASTER_DEV) != 0x00UL)
+    {
+      uint8_t data_byte = I2C_receiveData(I2C_MASTER_DEV);
+      if(Byte_parityBitCheck(data_byte) == false)
+      {
+        printf("[%d]%d parity check is invalid",__LINE__,data_byte);
+      }
+    }
+  }
 }
 
-void I2C_Slave_ErrorAbortIRQHandler(void)
+void I2C_Master_RxOverflowRQHandler(void)
 {
-  slave_error_flag++;
-  printf("I2C1_ERROR_STATUS = 0x%x\n",I2C1_ERROR_STATUS);
-  I2C_AllErrorStatusClear(I2C_SLAVE_DEV);
+  if(I2C_intStatusGet(I2C_MASTER_DEV, I2C_RX_OVF_IE) == Set)
+  {
+    printf("I2C Master Rx overflow,fifo count is %d\n",I2C_RxFIFOCountGet(I2C_MASTER_DEV));
+  }
 }
 
-#define I2S_TX_BUFFER_SIZE 0xFF
-#define I2S_RX_BUFFER_SIZE 0xFF
-
-static uint8_t i2s_txBuffer[I2S_TX_BUFFER_SIZE] = {0};
-static uint8_t i2s_rxBuffer[I2S_RX_BUFFER_SIZE] = {0};
+void I2C_Master_RxUnderflowRQHandler(void)
+{
+  if(I2C_intStatusGet(I2C_MASTER_DEV, I2C_RX_UNDER_IE) == Set)
+  {
+    printf("I2C Master Rx underflow,fifo count is %d\n",I2C_RxFIFOCountGet(I2C_MASTER_DEV));
+  }
+}
 
 void I2C_Master_TxEmptyIRQHandler(void)
 {
@@ -131,12 +149,7 @@ void I2C_Master_TxEmptyIRQHandler(void)
     
     while(I2C_TxFIFOCountGet(I2C_MASTER_DEV) != I2C_TX_FIFO_DEPTH)
     {
-      I2C_transmitData(I2C_MASTER_DEV, i2s_txBuffer[Tx_Counter++], I2C_RESET_STOP_DIS);
-      
-      if(Tx_Counter == I2S_TX_BUFFER_SIZE)
-      {
-        Tx_Counter = 0x00UL;
-      }
+      I2C_transmitData(I2C_MASTER_DEV, Byte_parityBitGenerate(Tx_Counter), I2C_RESET_STOP_DIS);
     }
   }
 }
@@ -145,26 +158,34 @@ void I2C_Master_TxOverflowIRQHandler(void)
 {
   if(I2C_intStatusGet(I2C_MASTER_DEV, I2C_TX_OVF_IE) == Set)
   {
-    printf("I2C Tx overflow,fifo count is %d\n",I2C_TxFIFOCountGet(I2C_MASTER_DEV));
+    printf("I2C Master Tx overflow,fifo count is %d\n",I2C_TxFIFOCountGet(I2C_MASTER_DEV));
   }
 }
+
+static uint32_t master_error_flag = 0x00;
+
+void I2C_Master_ErrorAbortIRQHandler(void)
+{
+  printf("I2C Master Error Status = 0x%x\n",I2C_Master->ERROR_STATUS);
+  I2C_AllErrorStatusClear(I2C_MASTER_DEV);
+  
+  master_error_flag++;
+}
+
+
+/******I2C Slave IRQ Handler******/
 
 void I2C_Slave_RxFullIRQHandler(void)
 {
   if(I2C_intStatusGet(I2C_SLAVE_DEV, I2C_RX_FULL_IE) == Set)
-  {
-    static uint32_t Rx_Counter = 0x00UL;
-        
+  {        
     while(I2C_RxFIFOCountGet(I2C_SLAVE_DEV) != 0x00UL)
     {
-      i2s_rxBuffer[Rx_Counter++] = I2C_receiveData(I2C_SLAVE_DEV);
-      
-      if(Rx_Counter == I2S_RX_BUFFER_SIZE)
+      uint8_t data_byte = I2C_receiveData(I2C_SLAVE_DEV);
+      if(Byte_parityBitCheck(data_byte) == false)
       {
-        Rx_Counter = 0x00UL;
+        printf("[%d]%d parity check is invalid",__LINE__,data_byte);
       }
-      
-      (void)i2s_rxBuffer;
     }
   }
 }
@@ -173,7 +194,7 @@ void I2C_Slave_RxOverflowRQHandler(void)
 {
   if(I2C_intStatusGet(I2C_SLAVE_DEV, I2C_RX_OVF_IE) == Set)
   {
-    printf("I2C Rx overflow,fifo count is %d\n",I2C_RxFIFOCountGet(I2C_SLAVE_DEV));
+    printf("I2C Slave Rx overflow,fifo count is %d\n",I2C_RxFIFOCountGet(I2C_SLAVE_DEV));
   }
 }
 
@@ -181,17 +202,42 @@ void I2C_Slave_RxUnderflowRQHandler(void)
 {
   if(I2C_intStatusGet(I2C_SLAVE_DEV, I2C_RX_UNDER_IE) == Set)
   {
-    printf("I2C Rx underflow,fifo count is %d\n",I2C_RxFIFOCountGet(I2C_SLAVE_DEV));
+    printf("I2C Slave Rx underflow,fifo count is %d\n",I2C_RxFIFOCountGet(I2C_SLAVE_DEV));
   }
 }
 
-static void I2S_txBufferInit(void)
+void I2C_Slave_TxEmptyIRQHandler(void)
 {
-  for(uint32_t i = 0; i <= I2S_TX_BUFFER_SIZE;i++)
+  if(I2C_intStatusGet(I2C_SLAVE_DEV, I2C_TX_EMPTY_IE) == Set)
   {
-    i2s_txBuffer[i] = i;
+    static uint32_t Tx_Counter = 0x00UL;
+    
+    while(I2C_TxFIFOCountGet(I2C_SLAVE_DEV) != I2C_TX_FIFO_DEPTH)
+    {
+      I2C_transmitData(I2C_SLAVE_DEV, Byte_parityBitGenerate(Tx_Counter), I2C_RESET_STOP_DIS);
+    }
   }
 }
+
+void I2C_Slave_TxOverflowIRQHandler(void)
+{
+  if(I2C_intStatusGet(I2C_SLAVE_DEV, I2C_TX_OVF_IE) == Set)
+  {
+    printf("I2C Slave Tx overflow,fifo count is %d\n",I2C_TxFIFOCountGet(I2C_SLAVE_DEV));
+  }
+}
+
+static uint32_t slave_error_flag = 0x00;
+
+void I2C_Slave_ErrorAbortIRQHandler(void)
+{
+  printf("I2C Slave Error Status = 0x%x\n",I2C_Slave->ERROR_STATUS);
+  I2C_AllErrorStatusClear(I2C_SLAVE_DEV);
+  
+  slave_error_flag++;
+}
+
+/******I2C GPIO Init******/
 
 void I2C_Master_GPIO_init(void)
 {
@@ -223,25 +269,29 @@ void I2C_Slave_GPIO_init(void)
   PORT_PullConfig(PORT_A, GPIO_1,PORT_PULL_UP);
 }
 
+/******I2C Dev Init******/
+
 void I2C_Master_init(void)
 {
-  CLK_SetClkDivider(CLK_I2C0, CLK_DIV_4);
-  CLK_ModuleSrc(CLK_I2C0, CLK_SRC_OSC40M);
-  SYSCTRL_ResetModule(SYSCTRL_I2C0);
-  SYSCTRL_EnableModule(SYSCTRL_I2C0);
+  CLK_SetClkDivider(I2C_MASTER_CLK, CLK_DIV_4);
+  CLK_ModuleSrc(I2C_MASTER_CLK, CLK_SRC_OSC40M);
+  SYSCTRL_ResetModule(I2C_MASTER_SYSCTRL);
+  SYSCTRL_EnableModule(I2C_MASTER_SYSCTRL);
   
   I2C_init(I2C_MASTER_DEV, &masterConfig);
 }
 
 void I2C_Slave_init(void)
 {
-  CLK_SetClkDivider(CLK_I2C1, CLK_DIV_4);
-  CLK_ModuleSrc(CLK_I2C1, CLK_SRC_OSC40M);
-  SYSCTRL_ResetModule(SYSCTRL_I2C1);
-  SYSCTRL_EnableModule(SYSCTRL_I2C1);
+  CLK_SetClkDivider(I2C_SLAVE_CLK, CLK_DIV_4);
+  CLK_ModuleSrc(I2C_SLAVE_CLK, CLK_SRC_OSC40M);
+  SYSCTRL_ResetModule(I2C_SLAVE_SYSCTRL);
+  SYSCTRL_EnableModule(I2C_SLAVE_SYSCTRL);
   
   I2C_init(I2C_SLAVE_DEV, &slaveConfig);
 }
+
+/******I2C DMA Init******/
 
 void DMA_I2C_Master_Configure(void)
 {
@@ -252,19 +302,9 @@ void DMA_I2C_Slave_Configure(void)
 {
   
 }
- 
-void user_delay(uint32_t cycle)
-{
-  for(uint32_t i = 0;i < cycle;i++){}
-}
-
-#define TEST_BUFFER_SIZE 256
-static uint8_t test_buffer[TEST_BUFFER_SIZE] = {0};
 
 int main(void)
-{
-    (void)test_buffer;
-    
+{    
 #if OSC40M_ENABLE
     OSC40M_ClockInit();
 #else
@@ -272,9 +312,7 @@ int main(void)
 #endif
     
     Ex_BoardUartInit();
-    
-    I2S_txBufferInit();
-    
+        
     I2C_Master_GPIO_init();
     I2C_Slave_GPIO_init();
     
@@ -289,7 +327,7 @@ int main(void)
     I2C_DMAWatermarkSet(I2C_MASTER_DEV, &DMAConfig);
     I2C_DMAWatermarkSet(I2C_SLAVE_DEV, &DMAConfig);
     
-
+    I2C_SDASetupTimeConfig(I2C_MASTER_DEV, SCL_DURATION_CNT/2,SYSTEM_CLOCK_FREQUENCE);
     I2C_SDASetupTimeConfig(I2C_SLAVE_DEV, SCL_DURATION_CNT/2,SYSTEM_CLOCK_FREQUENCE);
     
     I2C_SDAHoldTimeConfig(I2C_MASTER_DEV, &SDAMasterHoldTimeConfig, SYSTEM_CLOCK_FREQUENCE);
@@ -303,10 +341,66 @@ int main(void)
     I2C_DMAEnable(I2C_MASTER_DEV, Disable, Disable);
     I2C_DMAEnable(I2C_SLAVE_DEV, Disable, Disable);
     
+    /***Master Interrupt Configure***/
+       
+    /***I2C_MASTER_DEV Tx Empty Interrupt Configure***/
+    I2C_intCallbackRegister(I2C_MASTER_DEV,I2C_TX_EMPTY_IE,I2C_Master_TxEmptyIRQHandler);
+    I2C_intEnable(I2C_MASTER_DEV, I2C_TX_EMPTY_IE, Disable);
+    I2C_intFlagClear(I2C_MASTER_DEV, I2C_TX_EMPTY_IE);
+    
+    /***I2C_MASTER_DEV Tx Overflow Interrupt Configure***/
+    I2C_intCallbackRegister(I2C_MASTER_DEV,I2C_TX_OVF_IE,I2C_Master_TxOverflowIRQHandler);
+    I2C_intEnable(I2C_MASTER_DEV, I2C_TX_OVF_IE, Disable);
+    I2C_intFlagClear(I2C_MASTER_DEV, I2C_TX_OVF_IE);
+    
+    /***I2C_MASTER_DEV Rx Full Interrupt Configure***/
+    I2C_intCallbackRegister(I2C_MASTER_DEV,I2C_RX_FULL_IE,I2C_Master_RxFullIRQHandler);
+    I2C_intEnable(I2C_MASTER_DEV, I2C_RX_FULL_IE, Disable);
+    I2C_intFlagClear(I2C_MASTER_DEV, I2C_RX_FULL_IE);
+    
+    /***I2C_MASTER_DEV Rx Overflow Interrupt Configure***/
+    I2C_intCallbackRegister(I2C_MASTER_DEV,I2C_RX_OVF_IE,I2C_Master_RxOverflowRQHandler);
+    I2C_intEnable(I2C_MASTER_DEV, I2C_RX_OVF_IE, Disable);
+    I2C_intFlagClear(I2C_MASTER_DEV, I2C_RX_OVF_IE);
+    
+    /***I2C_MASTER_DEV Rx Underflow Interrupt Configure***/
+    I2C_intCallbackRegister(I2C_MASTER_DEV,I2C_RX_UNDER_IE,I2C_Master_RxUnderflowRQHandler);
+    I2C_intEnable(I2C_MASTER_DEV, I2C_RX_UNDER_IE, Disable);
+    I2C_intFlagClear(I2C_MASTER_DEV, I2C_RX_UNDER_IE);
+    
+    /***I2C_MASTER_DEV Error Abort Interrupt Configure***/
     I2C_intCallbackRegister(I2C_MASTER_DEV,I2C_ERROR_ABORT_IE,I2C_Master_ErrorAbortIRQHandler);
     I2C_intEnable(I2C_MASTER_DEV, I2C_ERROR_ABORT_IE, Enable);
     I2C_intFlagClear(I2C_MASTER_DEV, I2C_ERROR_ABORT_IE);
+    
+    /***Slave Interrupt Configure***/
+    
+    /***I2C_SLAVE_DEV Tx Empty Interrupt Configure***/
+    I2C_intCallbackRegister(I2C_SLAVE_DEV,I2C_TX_EMPTY_IE,I2C_Slave_TxEmptyIRQHandler);
+    I2C_intEnable(I2C_SLAVE_DEV, I2C_TX_EMPTY_IE, Disable);
+    I2C_intFlagClear(I2C_SLAVE_DEV, I2C_TX_EMPTY_IE);
+    
+    /***I2C_SLAVE_DEV Tx Overflow Interrupt Configure***/
+    I2C_intCallbackRegister(I2C_SLAVE_DEV,I2C_TX_OVF_IE,I2C_Slave_TxOverflowIRQHandler);
+    I2C_intEnable(I2C_SLAVE_DEV, I2C_TX_OVF_IE, Disable);
+    I2C_intFlagClear(I2C_SLAVE_DEV, I2C_TX_OVF_IE);
+    
+    /***I2C_SLAVE_DEV Rx Full Interrupt Configure***/
+    I2C_intCallbackRegister(I2C_SLAVE_DEV,I2C_RX_FULL_IE,I2C_Slave_RxFullIRQHandler);
+    I2C_intEnable(I2C_SLAVE_DEV, I2C_RX_FULL_IE, Disable);
+    I2C_intFlagClear(I2C_SLAVE_DEV, I2C_RX_FULL_IE);
+    
+    /***I2C_SLAVE_DEV Rx Overflow Interrupt Configure***/
+    I2C_intCallbackRegister(I2C_SLAVE_DEV,I2C_RX_OVF_IE,I2C_Slave_RxOverflowRQHandler);
+    I2C_intEnable(I2C_SLAVE_DEV, I2C_RX_OVF_IE, Disable);
+    I2C_intFlagClear(I2C_SLAVE_DEV, I2C_RX_OVF_IE);
+    
+    /***I2C_SLAVE_DEV Rx Underflow Interrupt Configure***/
+    I2C_intCallbackRegister(I2C_SLAVE_DEV,I2C_RX_UNDER_IE,I2C_Slave_RxUnderflowRQHandler);
+    I2C_intEnable(I2C_SLAVE_DEV, I2C_RX_UNDER_IE, Disable);
+    I2C_intFlagClear(I2C_SLAVE_DEV, I2C_RX_UNDER_IE);
 
+    /***I2C_SLAVE_DEV Error Abort Interrupt Configure***/
     I2C_intCallbackRegister(I2C_SLAVE_DEV,I2C_ERROR_ABORT_IE,I2C_Slave_ErrorAbortIRQHandler);
     I2C_intEnable(I2C_SLAVE_DEV, I2C_ERROR_ABORT_IE, Enable);
     I2C_intFlagClear(I2C_SLAVE_DEV, I2C_ERROR_ABORT_IE);
@@ -314,42 +408,29 @@ int main(void)
     I2C_enable(I2C_MASTER_DEV, Enable);
     I2C_enable(I2C_SLAVE_DEV, Enable);
     
-    /***I2C_MASTER_DEV Tx Interrupt Configure***/
-    I2C_intCallbackRegister(I2C_MASTER_DEV,I2C_TX_EMPTY_IE,I2C_Master_TxEmptyIRQHandler);
-    I2C_intEnable(I2C_MASTER_DEV, I2C_TX_EMPTY_IE, Disable);
-    I2C_intFlagClear(I2C_MASTER_DEV, I2C_TX_EMPTY_IE);
-    
-    I2C_intCallbackRegister(I2C_MASTER_DEV,I2C_TX_OVF_IE,I2C_Master_TxOverflowIRQHandler);
-    I2C_intEnable(I2C_MASTER_DEV, I2C_TX_OVF_IE, Disable);
-    I2C_intFlagClear(I2C_MASTER_DEV, I2C_TX_OVF_IE);
-    
-    /***I2C_SLAVE_DEV Rx Interrupt Configure***/
-    I2C_intCallbackRegister(I2C_SLAVE_DEV,I2C_RX_FULL_IE,I2C_Slave_RxFullIRQHandler);
-    I2C_intEnable(I2C_SLAVE_DEV, I2C_RX_FULL_IE, Disable);
-    I2C_intFlagClear(I2C_SLAVE_DEV, I2C_RX_FULL_IE);
-    
-    I2C_intCallbackRegister(I2C_SLAVE_DEV,I2C_RX_OVF_IE,I2C_Slave_RxOverflowRQHandler);
-    I2C_intEnable(I2C_SLAVE_DEV, I2C_RX_OVF_IE, Disable);
-    I2C_intFlagClear(I2C_SLAVE_DEV, I2C_RX_OVF_IE);
-    
-    I2C_intCallbackRegister(I2C_SLAVE_DEV,I2C_RX_UNDER_IE,I2C_Slave_RxUnderflowRQHandler);
-    I2C_intEnable(I2C_SLAVE_DEV, I2C_RX_UNDER_IE, Disable);
-    I2C_intFlagClear(I2C_SLAVE_DEV, I2C_RX_UNDER_IE);
-    
     INT_EnableIRQ(I2C0_IRQn);
     INT_EnableIRQ(I2C1_IRQn);
     
-    printf("I2C0_SDA_SETUP_TIMING = 0x%x\n",I2C0_SDA_SETUP_TIMING);
-    printf("I2C1_SDA_SETUP_TIMING = 0x%x\n",I2C1_SDA_SETUP_TIMING);
-    
-    printf("I2C0_SDA_HOLD_TIMING = 0x%x\n",I2C0_SDA_HOLD_TIMING);
-    printf("I2C1_SDA_HOLD_TIMING = 0x%x\n",I2C1_SDA_HOLD_TIMING);
-    
-    printf("I2C0_FSTD_SPKCNT = 0x%x\n",I2C0_FSTD_SPKCNT);
-    printf("I2C1_FSTD_SPKCNT = 0x%x\n",I2C1_FSTD_SPKCNT);
+    printf("I2C Master SDA Setup Time = %d\n",I2C_Master->SDA_SETUP_TIMING);
+    printf("I2C Slave SDA Setup Time = %d\n",I2C_Slave->SDA_SETUP_TIMING);
 
-    printf("I2C0_HS_SPKCNT = 0x%x\n",I2C0_HS_SPKCNT);
-    printf("I2C1_HS_SPKCNT = 0x%x\n",I2C1_HS_SPKCNT);
+    printf("I2C Master SDA Hold Time = %d\n",I2C_Master->SDA_HOLD_TIMING);
+    printf("I2C Slave SDA Hold Time = %d\n",I2C_Slave->SDA_HOLD_TIMING);
+
+    printf("I2C Master Fast/Std Spike Count = %d\n",I2C_Master->FSTD_SPKCNT);
+    printf("I2C Slave Fast/Std Spike Count = %d\n",I2C_Slave->FSTD_SPKCNT);
+
+    printf("I2C Master High Spike Count = %d\n",I2C_Master->HS_SPKCNT);
+    printf("I2C Slave High Spike Count = %d\n",I2C_Slave->HS_SPKCNT);
+
+    printf("I2C Master Std SCL High Count = %d\n",I2C_Master->STD_SCL_HCNT);
+    printf("I2C Master Std SCL Low Count = %d\n",I2C_Slave->STD_SCL_LCNT);
+
+    printf("I2C Master Fast SCL High Count = %d\n",I2C_Master->FST_SCL_HCNT);
+    printf("I2C Master Fast SCL Low Count = %d\n",I2C_Slave->FST_SCL_LCNT);
+    
+    printf("I2C Master High SCL High Count = %d\n",I2C_Master->HS_SCL_HCNT);
+    printf("I2C Master High SCL Low Count = %d\n",I2C_Slave->HS_SCL_LCNT);
     
     printf("20k14x_app I2C start.\n");
     
@@ -359,7 +440,7 @@ int main(void)
     for(int index = 0;index <= 255;index++)
     {
       while(I2C_TxFIFOCountGet(I2C_MASTER_DEV) >= 0x01);
-      I2C_transmitData(I2C_MASTER_DEV, index, I2C_RESET_STOP_DIS);
+      I2C_transmitData(I2C_MASTER_DEV, Byte_parityBitGenerate(index), I2C_RESET_STOP_DIS);
 
       if(index == 100)
       {
@@ -369,7 +450,12 @@ int main(void)
       }
       
       while(I2C_RxFIFOCountGet(I2C_SLAVE_DEV) == 0);
-      test_buffer[index] = I2C_receiveData(I2C_SLAVE_DEV);
+      
+      uint8_t data_byte = I2C_receiveData(I2C_SLAVE_DEV);
+      if(Byte_parityBitCheck(data_byte) == false)
+      {
+        printf("[%d]%d parity check is invalid",__LINE__,data_byte);
+      }
     }
     
 //    while(Reset == I2C_flagStatus0Get(I2C_SLAVE_DEV, STOP_DETECT));
@@ -384,9 +470,15 @@ int main(void)
     
     for(int i = 0;i <= 255;i++)
     {
-      I2C_transmitData(I2C_SLAVE_DEV, i,I2C_RESET_STOP_DIS);
+      I2C_transmitData(I2C_SLAVE_DEV, Byte_parityBitGenerate(i),I2C_RESET_STOP_DIS);
       while(I2C_RxFIFOCountGet(I2C_MASTER_DEV) == 0);
-      I2C_receiveData(I2C_MASTER_DEV);
+      
+      uint8_t data_byte = I2C_receiveData(I2C_MASTER_DEV);
+      if(Byte_parityBitCheck(data_byte) == false)
+      {
+        printf("[%d]%d parity check is invalid",__LINE__,data_byte);
+      }
+      
       if(i == 254)
       {
         I2C_masterACK(I2C_MASTER_DEV,Disable);

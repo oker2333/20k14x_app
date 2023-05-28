@@ -22,13 +22,13 @@ bool Byte_parityBitCheck(uint8_t data_byte)
   return ret;
 }
 
-void Byte_parityBitGenerate(uint8_t* data_byte)
+uint8_t Byte_parityBitGenerate(uint8_t data_byte)
 {
   uint8_t count = 0;
   
   for(int i = 0;i < 7;i++)
   {
-    if(*data_byte & (0x01 << i))
+    if(data_byte & (0x01 << i))
     {
       count++;
     }
@@ -36,12 +36,14 @@ void Byte_parityBitGenerate(uint8_t* data_byte)
   
   if(count % 2)
   {
-    *data_byte |= 1 << 7;
+    data_byte |= 1 << 7;
   }
   else
   {
-    *data_byte &= ~(1 << 7);
+    data_byte &= ~(1 << 7);
   }
+  
+  return data_byte;
 }
 
 /****************two bytes****************/

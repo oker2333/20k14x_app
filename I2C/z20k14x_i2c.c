@@ -2,12 +2,6 @@
 
 #include "z20k14x_i2c.h"
 
-static I2C_Reg_t* const i2cRegWPtr[I2C_DEV_NUM] = 
-{
-    I2C0_base_addr,
-    I2C1_base_addr
-};
-
 #define I2C_INT_32BITS 32
 
 static I2C_initHandler_t _int_handler[I2C_DEV_NUM][I2C_INT_32BITS] = {0};
@@ -207,9 +201,7 @@ void I2C_enable(I2C_TypeDef* I2Cx,ctrlState_t state)
 }
 
 void I2C_init(I2C_TypeDef* I2Cx, const I2C_config_t* config)
-{
-  (void)i2cRegWPtr;
-  
+{  
   uint32_t I2C_status = I2Cx->CONFIG0 & 0x01UL;  
   I2Cx->CONFIG0 &= ~0x01UL;
   
