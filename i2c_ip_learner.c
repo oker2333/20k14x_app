@@ -116,6 +116,11 @@ I2C_SpikeLengthParam_t spike_config =
 
 /******I2C Master IRQ Handler******/
 
+void I2C_Master_SuckAtLowIRQHandler(void)
+{
+  printf("[%d]I2C Master Stuck At Low\n",__LINE__);
+}
+
 void I2C_Master_RxFullIRQHandler(void)
 {
   if(I2C_intStatusGet(I2C_MASTER_DEV, I2C_RX_FULL_IE) == Set)
@@ -125,7 +130,7 @@ void I2C_Master_RxFullIRQHandler(void)
       uint8_t data_byte = I2C_receiveData(I2C_MASTER_DEV);
       if(Byte_parityBitCheck(data_byte) == false)
       {
-        printf("[%d]%d parity check is invalid",__LINE__,data_byte);
+        printf("[%d]%d parity check is invalid\n",__LINE__,data_byte);
       }
     }
   }
@@ -168,18 +173,20 @@ void I2C_Master_TxOverflowIRQHandler(void)
   }
 }
 
-static uint32_t master_error_flag = 0x00;
-
 void I2C_Master_ErrorAbortIRQHandler(void)
 {
-  printf("I2C Master Error Status = 0x%x\n",I2C_Master->ERROR_STATUS);
+//  printf("I2C Master Error Status = 0x%x\n",I2C_Master->ERROR_STATUS);
+  I2C_errorPrint(I2C_MASTER_DEV,"Master");
   I2C_AllErrorStatusClear(I2C_MASTER_DEV);
-  
-  master_error_flag++;
 }
 
 
 /******I2C Slave IRQ Handler******/
+
+void I2C_Slave_SuckAtLowIRQHandler(void)
+{
+  printf("[%d]I2C Slave Stuck At Low\n",__LINE__);
+}
 
 void I2C_Slave_RxFullIRQHandler(void)
 {
@@ -190,7 +197,7 @@ void I2C_Slave_RxFullIRQHandler(void)
       uint8_t data_byte = I2C_receiveData(I2C_SLAVE_DEV);
       if(Byte_parityBitCheck(data_byte) == false)
       {
-        printf("[%d]%d parity check is invalid",__LINE__,data_byte);
+        printf("[%d]%d parity check is invalid\n",__LINE__,data_byte);
       }
     }
   }
@@ -233,14 +240,11 @@ void I2C_Slave_TxOverflowIRQHandler(void)
   }
 }
 
-static uint32_t slave_error_flag = 0x00;
-
 void I2C_Slave_ErrorAbortIRQHandler(void)
 {
-  printf("I2C Slave Error Status = 0x%x\n",I2C_Slave->ERROR_STATUS);
+//  printf("I2C Slave Error Status = 0x%x\n",I2C_Slave->ERROR_STATUS);
+  I2C_errorPrint(I2C_SLAVE_DEV,"Slave");
   I2C_AllErrorStatusClear(I2C_SLAVE_DEV);
-  
-  slave_error_flag++;
 }
 
 /******I2C GPIO Init******/
@@ -348,11 +352,22 @@ int main(void)
 
     I2C_SCLHighLowDurationConfig(I2C_MASTER_DEV, &SCLDurationConfig, SYSTEM_CLOCK_FREQUENCE);
     
+    I2C_SCLStuckLowTimeout(I2C_MASTER_DEV, 1*1000*1000, SYSTEM_CLOCK_FREQUENCE);
+    I2C_SDAStuckLowTimeout(I2C_MASTER_DEV, 10*1000*1000, SYSTEM_CLOCK_FREQUENCE);
+    
+    I2C_SCLStuckLowTimeout(I2C_SLAVE_DEV, 1*1000*1000, SYSTEM_CLOCK_FREQUENCE);
+    I2C_SDAStuckLowTimeout(I2C_SLAVE_DEV, 10*1000*1000, SYSTEM_CLOCK_FREQUENCE);
+    
     I2C_DMAEnable(I2C_MASTER_DEV, Disable, Disable);
     I2C_DMAEnable(I2C_SLAVE_DEV, Disable, Disable);
     
     /***Master Interrupt Configure***/
-       
+
+    /***I2C_MASTER_DEV Stuck At Low Interrupt Configure***/
+    I2C_intCallbackRegister(I2C_MASTER_DEV,I2C_SCL_STUCK_AT_LOW_IE,I2C_Master_SuckAtLowIRQHandler);
+    I2C_intEnable(I2C_MASTER_DEV, I2C_SCL_STUCK_AT_LOW_IE, Enable);
+    I2C_intFlagClear(I2C_MASTER_DEV, I2C_SCL_STUCK_AT_LOW_IE);
+    
     /***I2C_MASTER_DEV Tx Empty Interrupt Configure***/
     I2C_intCallbackRegister(I2C_MASTER_DEV,I2C_TX_EMPTY_IE,I2C_Master_TxEmptyIRQHandler);
     I2C_intEnable(I2C_MASTER_DEV, I2C_TX_EMPTY_IE, Disable);
@@ -384,6 +399,11 @@ int main(void)
     I2C_intFlagClear(I2C_MASTER_DEV, I2C_ERROR_ABORT_IE);
     
     /***Slave Interrupt Configure***/
+    
+    /***I2C_SLAVE_DEV Stuck At Low Interrupt Configure***/
+    I2C_intCallbackRegister(I2C_SLAVE_DEV,I2C_SCL_STUCK_AT_LOW_IE,I2C_Slave_SuckAtLowIRQHandler);
+    I2C_intEnable(I2C_SLAVE_DEV, I2C_SCL_STUCK_AT_LOW_IE, Enable);
+    I2C_intFlagClear(I2C_SLAVE_DEV, I2C_SCL_STUCK_AT_LOW_IE);
     
     /***I2C_SLAVE_DEV Tx Empty Interrupt Configure***/
     I2C_intCallbackRegister(I2C_SLAVE_DEV,I2C_TX_EMPTY_IE,I2C_Slave_TxEmptyIRQHandler);
@@ -441,6 +461,9 @@ int main(void)
     
     printf("I2C Master High SCL High Count = %d\n",I2C_Master->HS_SCL_HCNT);
     printf("I2C Master High SCL Low Count = %d\n",I2C_Slave->HS_SCL_LCNT);
+
+    printf("I2C Master SCL Stuck At Low Count = %d\n",I2C_Master->SCL_LOW_TIMEOUT);
+    printf("I2C Master SDA Stuck At Low Count = %d\n",I2C_Master->SDA_LOW_TIMEOUT);
     
     printf("20k14x_app I2C start.\n");
     

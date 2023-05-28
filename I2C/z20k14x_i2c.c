@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "z20k14x_i2c.h"
 
@@ -37,7 +38,7 @@ void I2C0_IRQHandler(void)
     if(Set == I2C_intStatusGet(I2C0, bit))
     {
       _int_handler[I2C0_DEV][bit]();
-      
+
       if((I2C_RX_FULL_IE != bit) && (I2C_TX_EMPTY_IE != bit))
       {
         I2C0->STATUS0 = 0x01UL << bit;
@@ -369,4 +370,85 @@ void I2C1_registerPrint(void)
   printf("I2C1_SCL_LOW_TIMEOUT = 0x%x\n",I2C1_SCL_LOW_TIMEOUT);
   printf("I2C1_SDA_LOW_TIMEOUT = 0x%x\n",I2C1_SDA_LOW_TIMEOUT);
   printf("\n");
+}
+
+void I2C_errorPrint(I2C_TypeDef* I2Cx,char* error_dev)
+{
+  uint32_t error_status = I2Cx->ERROR_STATUS;
+  if(error_status & (0x01UL << 0))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_GEN_CALL_NO_ACK\n",error_dev,0);
+  }
+  if(error_status & (0x01UL << 1))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_GEN_CALL_READ\n",error_dev,1);
+  }
+  if(error_status & (0x01UL << 2))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_START_BYTE_ACK_DET\n",error_dev,2);
+  }
+  if(error_status & (0x01UL << 3))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_SBYTE_NORSTRT\n",error_dev,3);
+  }
+  if(error_status & (0x01UL << 4))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_H_NO_RSTRT\n",error_dev,4);
+  }
+  if(error_status & (0x01UL << 5))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_H_MCODE_ACK_DET\n",error_dev,5);
+  }
+  if(error_status & (0x01UL << 6))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_7BIT_ADDR_NO_ACK\n",error_dev,6);
+  }
+  if(error_status & (0x01UL << 7))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_10BIT_ADDR1_NO_ACK\n",error_dev,7);
+  }
+  if(error_status & (0x01UL << 8))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_10BIT_ADDR2_NO_ACK\n",error_dev,8);
+  }
+  if(error_status & (0x01UL << 9))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_10BIT_READ_NO_RSTRT\n",error_dev,9);
+  }
+  if(error_status & (0x01UL << 10))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_DATA_NO_ACK\n",error_dev,10);
+  }
+  if(error_status & (0x01UL << 11))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_MASTER_ABRT\n",error_dev,11);
+  }
+  if(error_status & (0x01UL << 12))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_MASTER_DIS\n",error_dev,12);
+  }
+  if(error_status & (0x01UL << 13))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_SLAVE_ARBLOST\n",error_dev,13);
+  }
+  if(error_status & (0x01UL << 14))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_MASTER_LOST\n",error_dev,14);
+  }
+  if(error_status & (0x01UL << 15))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_SLAVE_READ_REQ\n",error_dev,15);
+  }
+  if(error_status & (0x01UL << 16))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_SLAVE_FLUSH_TXFIFO\n",error_dev,16);
+  }
+  if(error_status & (0x01UL << 17))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_SDA_LOW_TIMEOUT\n",error_dev,17);
+  }
+  if(error_status & (0x07UL << 18))
+  {
+    printf("I2C %s Error Source Bit %d is ERR_TXFIFO_FLUSH_CNT %ld\n",error_dev,18,(error_status & (0x07UL << 18)));
+  }
 }

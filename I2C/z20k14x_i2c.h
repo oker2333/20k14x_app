@@ -251,6 +251,8 @@ void I2C0_registerPrint(void);
 
 void I2C1_registerPrint(void);
 
+void I2C_errorPrint(I2C_TypeDef* I2Cx,char* error_dev);
+
 #ifndef IIC_REGISTERS
 
 #define I2C0_PARAMETER *((volatile unsigned int*)(I2C0_BASE_ADDRESS + 0x04))
