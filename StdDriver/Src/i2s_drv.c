@@ -1003,10 +1003,6 @@ void I2S_CycleRxReset(I2S_Id_t i2sId)
 void I2S_GetDefaultConfig(I2S_Config_t *config)
 {
     config->audioResolution = I2S_AUDIO_RESOLUTION_32BIT;
-    config->i2sChannelsConfigStruct.channels[I2S_CHANNEL0_ID] = I2S_CHANNEL_ENABLE;
-    config->i2sChannelsConfigStruct.channels[I2S_CHANNEL1_ID] = I2S_CHANNEL_ENABLE;
-    config->i2sChannelsConfigStruct.channels[I2S_CHANNEL2_ID] = I2S_CHANNEL_DISABLE;
-    config->i2sChannelsConfigStruct.channels[I2S_CHANNEL3_ID] = I2S_CHANNEL_DISABLE;
     config->i2sBclkNum = I2S_BCLK_32_CYCLES;
     config->i2sNumBclkGate = I2S_NO_BCLK_GATING;
     config->masterClkDiv = 0;

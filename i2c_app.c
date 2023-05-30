@@ -357,7 +357,7 @@ int main(void)
     
     I2C_SCLStuckLowTimeout(I2C_SLAVE_DEV, 1*1000*1000, SYSTEM_CLOCK_FREQUENCE);
     I2C_SDAStuckLowTimeout(I2C_SLAVE_DEV, 10*1000*1000, SYSTEM_CLOCK_FREQUENCE);
-    
+
     I2C_DMAEnable(I2C_MASTER_DEV, Disable, Disable);
     I2C_DMAEnable(I2C_SLAVE_DEV, Disable, Disable);
     

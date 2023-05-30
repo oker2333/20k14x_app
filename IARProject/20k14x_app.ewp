@@ -2187,6 +2187,12 @@
             </file>
         </group>
         <file>
+            <name>$PROJ_DIR$\..\i2c_app.c</name>
+            <excluded>
+                <configuration>Debug</configuration>
+            </excluded>
+        </file>
+        <file>
             <name>$PROJ_DIR$\..\i2c_dma_rx_dma_tx.c</name>
             <excluded>
                 <configuration>Debug</configuration>
@@ -2215,9 +2221,6 @@
             <excluded>
                 <configuration>Debug</configuration>
             </excluded>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\..\i2c_ip_learner.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\i2c_polling_rx_int_tx.c</name>
@@ -2255,6 +2258,9 @@
         <group>
             <name>I2S</name>
         </group>
+        <file>
+            <name>$PROJ_DIR$\..\i2s_app.c</name>
+        </file>
     </group>
     <group>
         <name>SCM_APP</name>

@@ -191,12 +191,7 @@ typedef struct
                                                                             - I2S_BCLK_32_CYCLES: word line contains 32 bit clock cycles
                                                                         */
     uint8_t masterClkDiv;                                               /*!< Configure I2S master clock divider, actual division value is (masterClkDiv+1)*2 */
-    I2S_ChannelsEnableConfig_t i2sChannelsConfigStruct;                 /*!< Configure I2S channel0~channel3 transmit or receive function enable:
-                                                                        - channelTransmitReceive[0]: I2S channel0 transmit or receive function enable
-                                                                        - channelTransmitReceive[1]: I2S channel1 transmit or receive function enable
-                                                                        - channelTransmitReceive[2]: I2S channel2 transmit or receive function enable
-                                                                        - channelTransmitReceive[3]: I2S channel3 transmit or receive function enable
-                                                                        */
+
     I2S_AudioResolution_t audioResolution;                              /*!< Configure I2S channel resolution:
                                                                             - I2S_AUDIO_RESOLUTION_12BIT: I2S 12 bit audio resolution
                                                                             - I2S_AUDIO_RESOLUTION_16BIT: I2S 16 bit audio resolution
