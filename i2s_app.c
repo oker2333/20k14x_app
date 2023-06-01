@@ -4,6 +4,7 @@
 #include "i2s_drv.h"
 #include "int_drv.h"
 
+/*Personal SDK*/
 
 uint32_t I2S_RxFIFO_availableCount(I2S_FIFOTriggerLevel_t trigger_level)
 {
@@ -65,7 +66,7 @@ I2S_Config_t i2s1_transmit_config =
   .mode = I2S_MODE_SLAVE,                                   /* I2S master mode */
   .i2sNumBclkGate = I2S_NO_BCLK_GATING,                      /* No gated after the number of bclk cycles */
   .i2sBclkNum = I2S_BCLK_32_CYCLES,                          /* 32 number of bclk cycles during left or right word line */
-  .masterClkDiv = 19,                                         /* Actual division value is (masterClkDiv+1)*2 */
+  .masterClkDiv = 199,                                         /* Actual division value is (masterClkDiv+1)*2 */
   .audioResolution = I2S_AUDIO_RESOLUTION_32BIT,             /* Configure I2S channel 32 bit audio resolution */
   .rxfifoFullTriggerLevel = I2S_TRIGGER_LEVEL_DEPTH_8,      /* Configure I2S channel receive FIFO full trigger level 15 */
   .txfifoEmptyTriggerLevel = I2S_TRIGGER_LEVEL_DEPTH_8,      /* Configure I2S channel transmit FIFO empty trigger level 8 */
@@ -76,7 +77,7 @@ I2S_Config_t i2s1_receive_config =
   .mode = I2S_MODE_SLAVE,                                   /* I2S master mode */
   .i2sNumBclkGate = I2S_NO_BCLK_GATING,                      /* No gated after the number of bclk cycles */
   .i2sBclkNum = I2S_BCLK_32_CYCLES,                          /* 32 number of bclk cycles during left or right word line */
-  .masterClkDiv = 19,                                         /* Actual division value is (masterClkDiv+1)*2 */
+  .masterClkDiv = 199,                                         /* Actual division value is (masterClkDiv+1)*2 */
   .audioResolution = I2S_AUDIO_RESOLUTION_32BIT,             /* Configure I2S channel 32 bit audio resolution */
   .rxfifoFullTriggerLevel = I2S_TRIGGER_LEVEL_DEPTH_8,      /* Configure I2S channel receive FIFO full trigger level 15 */
   .txfifoEmptyTriggerLevel = I2S_TRIGGER_LEVEL_DEPTH_8,      /* Configure I2S channel transmit FIFO empty trigger level 8 */
@@ -349,6 +350,15 @@ void Ex_Module_Init(void)
     CLK_ModuleSrc(CLK_GPIO, CLK_SRC_OSC40M);
     CLK_ModuleSrc(CLK_I2S0, CLK_SRC_OSC40M);
     CLK_ModuleSrc(CLK_I2S1, CLK_SRC_OSC40M);
+            
+    SYSCTRL_ResetModule(SYSCTRL_PORTA);
+    SYSCTRL_ResetModule(SYSCTRL_PORTB);
+    SYSCTRL_ResetModule(SYSCTRL_PORTC);
+    SYSCTRL_ResetModule(SYSCTRL_PORTD);
+    SYSCTRL_ResetModule(SYSCTRL_PORTE);
+    SYSCTRL_ResetModule(SYSCTRL_GPIO);
+    SYSCTRL_ResetModule(SYSCTRL_I2S0);
+    SYSCTRL_ResetModule(SYSCTRL_I2S1);
     
     SYSCTRL_EnableModule(SYSCTRL_PORTA);
     SYSCTRL_EnableModule(SYSCTRL_PORTB);
@@ -360,9 +370,9 @@ void Ex_Module_Init(void)
     SYSCTRL_EnableModule(SYSCTRL_I2S1);
 
     /*I2S0 PIN MUX*/
-    PORT_PinmuxConfig(PORT_A, GPIO_16, PTA16_I2S0_WS);
     PORT_PinmuxConfig(PORT_A, GPIO_15, PTA15_I2S0_SCLK);
-
+    PORT_PinmuxConfig(PORT_A, GPIO_16, PTA16_I2S0_WS);
+    
     PORT_PinmuxConfig(PORT_B, GPIO_11, PTB11_I2S0_SD0);
     PORT_PinmuxConfig(PORT_B, GPIO_10, PTB10_I2S0_SD1);
     PORT_PinmuxConfig(PORT_B, GPIO_9, PTB9_I2S0_SD2);
@@ -376,6 +386,31 @@ void Ex_Module_Init(void)
 
     PORT_PinmuxConfig(PORT_E, GPIO_23, PTE23_I2S1_SCLK);
     PORT_PinmuxConfig(PORT_E, GPIO_24, PTE24_I2S1_WS);
+    
+#if 0
+    
+    /*I2S Flag Status Output*/
+
+#define timing_set()    GPIO_SetPinOutput(PORT_D, GPIO_16)
+#define timing_clear()  GPIO_ClearPinOutput(PORT_D, GPIO_16)
+
+    GPIO_SetPinDir(PORT_D, GPIO_15, GPIO_OUTPUT);
+    PORT_PinmuxConfig(PORT_D, GPIO_15, PINMUX_FUNCTION_1);
+    GPIO_ClearPinOutput(PORT_D, GPIO_15);
+    
+    GPIO_SetPinDir(PORT_D, GPIO_15, GPIO_OUTPUT);
+    PORT_PinmuxConfig(PORT_D, GPIO_15, PINMUX_FUNCTION_1);
+    GPIO_ClearPinOutput(PORT_D, GPIO_15);
+    
+    GPIO_SetPinDir(PORT_D, GPIO_15, GPIO_OUTPUT);
+    PORT_PinmuxConfig(PORT_D, GPIO_15, PINMUX_FUNCTION_1);
+    GPIO_ClearPinOutput(PORT_D, GPIO_15);
+    
+    GPIO_SetPinDir(PORT_D, GPIO_15, GPIO_OUTPUT);
+    PORT_PinmuxConfig(PORT_D, GPIO_15, PINMUX_FUNCTION_1);
+    GPIO_ClearPinOutput(PORT_D, GPIO_15);
+    
+#endif    
 }
 
 int main(void)
