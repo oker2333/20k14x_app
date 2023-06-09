@@ -26,8 +26,8 @@ I2S_ChannelsEnableConfig_t I2S0ChannelsConfigStruct =
 {
     I2S_CHANNEL_ENABLE,                              /* I2S channel0 transmit function */
     I2S_CHANNEL_ENABLE,                              /* I2S channel1 transmit function */
-    I2S_CHANNEL_ENABLE,                             /* I2S channel2 receive function */
-    I2S_CHANNEL_ENABLE,                             /* I2S channel3 receive function */
+    I2S_CHANNEL_DISABLE,                             /* I2S channel2 receive function */
+    I2S_CHANNEL_DISABLE,                             /* I2S channel3 receive function */
 };
 
 /* I2S config structure*/
@@ -57,8 +57,8 @@ I2S_ChannelsEnableConfig_t I2S1ChannelsConfigStruct =
 {
     I2S_CHANNEL_ENABLE,                              /* I2S channel0 transmit function */
     I2S_CHANNEL_ENABLE,                              /* I2S channel1 transmit function */
-    I2S_CHANNEL_ENABLE,                              /* I2S channel2 receive function */
-    I2S_CHANNEL_ENABLE,                              /* I2S channel3 receive function */
+    I2S_CHANNEL_DISABLE,                              /* I2S channel2 receive function */
+    I2S_CHANNEL_DISABLE,                              /* I2S channel3 receive function */
 };
 
 I2S_Config_t i2s1_transmit_config =
@@ -90,7 +90,7 @@ void Ex_I2S0TxCyclicCallback(void)
   static uint32_t i2s0_cycle_counter_left = 0x00;
   static uint32_t i2s0_cycle_counter_right = 0x00;
   
-  uint32_t free_count = I2S_TxFIFO_freeCount(I2S0_TXFIFO_TRIGGER_LEVEL);
+  uint32_t free_count = I2S_TxFIFO_freeCount(i2s1_transmit_config.txfifoEmptyTriggerLevel);
   
   for(int i = 0;i < free_count;i++)
   {
@@ -107,7 +107,7 @@ void Ex_I2S0TxEmptyChannel0Callback(void)
   static uint32_t i2s0_channel0_counter_left = 0x00;
   static uint32_t i2s0_channel0_counter_right = 0x00;
   
-  uint32_t free_count = I2S_TxFIFO_freeCount(I2S0_TXFIFO_TRIGGER_LEVEL);
+  uint32_t free_count = I2S_TxFIFO_freeCount(i2s1_transmit_config.txfifoEmptyTriggerLevel);
   
   for(int i = 0;i < free_count;i++)
   {
@@ -123,7 +123,7 @@ void Ex_I2S0TxEmptyChannel1Callback(void)
   static uint32_t i2s0_channel1_counter_left = 0x00;
   static uint32_t i2s0_channel1_counter_right = 0x00;
   
-  uint32_t free_count = I2S_TxFIFO_freeCount(I2S0_TXFIFO_TRIGGER_LEVEL);
+  uint32_t free_count = I2S_TxFIFO_freeCount(i2s1_transmit_config.txfifoEmptyTriggerLevel);
   
   for(int i = 0;i < free_count;i++)
   {
@@ -139,7 +139,7 @@ void Ex_I2S0TxEmptyChannel2Callback(void)
   static uint32_t i2s0_channel2_counter_left = 0x00;
   static uint32_t i2s0_channel2_counter_right = 0x00;
   
-  uint32_t free_count = I2S_TxFIFO_freeCount(I2S0_TXFIFO_TRIGGER_LEVEL);
+  uint32_t free_count = I2S_TxFIFO_freeCount(i2s1_transmit_config.txfifoEmptyTriggerLevel);
   
   for(int i = 0;i < free_count;i++)
   {
@@ -155,7 +155,7 @@ void Ex_I2S0TxEmptyChannel3Callback(void)
   static uint32_t i2s0_channel3_counter_left = 0x00;
   static uint32_t i2s0_channel3_counter_right = 0x00;
   
-  uint32_t free_count = I2S_TxFIFO_freeCount(I2S0_TXFIFO_TRIGGER_LEVEL);
+  uint32_t free_count = I2S_TxFIFO_freeCount(i2s1_transmit_config.txfifoEmptyTriggerLevel);
   
   for(int i = 0;i < free_count;i++)
   {
@@ -381,11 +381,11 @@ void Ex_Module_Init(void)
     /*I2S1 PIN MUX*/
     PORT_PinmuxConfig(PORT_E, GPIO_19, PTE19_I2S1_SD0);
     PORT_PinmuxConfig(PORT_E, GPIO_20, PTE20_I2S1_SD1);
-    PORT_PinmuxConfig(PORT_E, GPIO_21, PTE21_I2S1_SD2);
-    PORT_PinmuxConfig(PORT_E, GPIO_22, PTE22_I2S1_SD3);
+    PORT_PinmuxConfig(PORT_B, GPIO_17, PTB17_I2S1_SD2);
+    PORT_PinmuxConfig(PORT_A, GPIO_17, PTA17_I2S1_SD3);
 
-    PORT_PinmuxConfig(PORT_E, GPIO_23, PTE23_I2S1_SCLK);
-    PORT_PinmuxConfig(PORT_E, GPIO_24, PTE24_I2S1_WS);
+    PORT_PinmuxConfig(PORT_B, GPIO_14, PTB14_I2S1_SCLK);
+    PORT_PinmuxConfig(PORT_D, GPIO_4, PTD4_I2S1_WS);
     
 #if 0
     
