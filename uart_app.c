@@ -4,6 +4,8 @@
 #include "uart_drv.h"
 #include "int_drv.h"
 
+#define User_Delay(cycle) for(volatile uint32_t i = 0;i < cycle;i++){}
+
 void Ex_Module_Init(void)
 {
     CLK_SetClkDivider(CLK_PORTA, CLK_DIV_1);
@@ -19,13 +21,6 @@ void Ex_Module_Init(void)
     CLK_ModuleSrc(CLK_PORTD, CLK_SRC_OSC40M);
     CLK_ModuleSrc(CLK_PORTE, CLK_SRC_OSC40M);
     CLK_ModuleSrc(CLK_GPIO, CLK_SRC_OSC40M);
-                
-    SYSCTRL_ResetModule(SYSCTRL_PORTA);
-    SYSCTRL_ResetModule(SYSCTRL_PORTB);
-    SYSCTRL_ResetModule(SYSCTRL_PORTC);
-    SYSCTRL_ResetModule(SYSCTRL_PORTD);
-    SYSCTRL_ResetModule(SYSCTRL_PORTE);
-    SYSCTRL_ResetModule(SYSCTRL_GPIO);
     
     SYSCTRL_EnableModule(SYSCTRL_PORTA);
     SYSCTRL_EnableModule(SYSCTRL_PORTB);
@@ -75,10 +70,10 @@ void UART2_Param_Init(void)
   CLK_ModuleSrc(CLK_UART2, CLK_SRC_OSC40M);
   SYSCTRL_ResetModule(SYSCTRL_UART2);
   SYSCTRL_EnableModule(SYSCTRL_UART2);
-  
+
   PORT_PinmuxConfig(PORT_C, GPIO_0, PTC0_UART2_RX);
   PORT_PinmuxConfig(PORT_C, GPIO_1, PTC1_UART2_TX);
-  
+
   UART_FIFOConfig_t uart2FIFOConfig =
   {
     ENABLE,
@@ -87,7 +82,7 @@ void UART2_Param_Init(void)
     UART_TX_FIFO_CHAR_2,
     UART_RX_FIFO_LESS_2
   };
-  
+
   UART_FIFOConfig(UART2_ID, &uart2FIFOConfig);
   
   UART_Config_t uart2Config = 
@@ -103,6 +98,59 @@ void UART2_Param_Init(void)
   UART_Init(UART2_ID, &uart2Config);
 }
 
+void GPIO_Pinmux_Test(PORT_Id_t portId_a, PORT_GpioNum_t gpioNum_a,
+                      PORT_Id_t portId_b, PORT_GpioNum_t gpioNum_b,
+                      PORT_Id_t portId_c, PORT_GpioNum_t gpioNum_c,
+                      PORT_Id_t portId_d, PORT_GpioNum_t gpioNum_d,
+                      volatile uint32_t cycle)
+{
+    CLK_SetClkDivider(CLK_PORTA, CLK_DIV_1);
+    CLK_SetClkDivider(CLK_PORTB, CLK_DIV_1);
+    CLK_SetClkDivider(CLK_PORTC, CLK_DIV_1);
+    CLK_SetClkDivider(CLK_PORTD, CLK_DIV_1);
+    CLK_SetClkDivider(CLK_PORTE, CLK_DIV_1);
+    CLK_SetClkDivider(CLK_GPIO, CLK_DIV_1);
+    
+    CLK_ModuleSrc(CLK_PORTA, CLK_SRC_OSC40M);
+    CLK_ModuleSrc(CLK_PORTB, CLK_SRC_OSC40M);
+    CLK_ModuleSrc(CLK_PORTC, CLK_SRC_OSC40M);
+    CLK_ModuleSrc(CLK_PORTD, CLK_SRC_OSC40M);
+    CLK_ModuleSrc(CLK_PORTE, CLK_SRC_OSC40M);
+    CLK_ModuleSrc(CLK_GPIO, CLK_SRC_OSC40M);
+    
+    SYSCTRL_EnableModule(SYSCTRL_PORTA);
+    SYSCTRL_EnableModule(SYSCTRL_PORTB);
+    SYSCTRL_EnableModule(SYSCTRL_PORTC);
+    SYSCTRL_EnableModule(SYSCTRL_PORTD);
+    SYSCTRL_EnableModule(SYSCTRL_PORTE);
+    SYSCTRL_EnableModule(SYSCTRL_GPIO);
+    
+    GPIO_SetPinDir(portId_a, gpioNum_a, GPIO_OUTPUT);
+    GPIO_SetPinDir(portId_b, gpioNum_b, GPIO_OUTPUT);
+    GPIO_SetPinDir(portId_c, gpioNum_c, GPIO_OUTPUT);
+    GPIO_SetPinDir(portId_d, gpioNum_d, GPIO_OUTPUT);
+    
+    PORT_PinmuxConfig(portId_a, gpioNum_a, PINMUX_FUNCTION_1);
+    PORT_PinmuxConfig(portId_b, gpioNum_b, PINMUX_FUNCTION_1);
+    PORT_PinmuxConfig(portId_c, gpioNum_c, PINMUX_FUNCTION_1);
+    PORT_PinmuxConfig(portId_d, gpioNum_d, PINMUX_FUNCTION_1);
+    
+    while(true)
+    {
+      User_Delay(cycle);
+      GPIO_SetPinOutput(portId_a, gpioNum_a);
+      GPIO_SetPinOutput(portId_b, gpioNum_b);
+      GPIO_SetPinOutput(portId_c, gpioNum_c);
+      GPIO_SetPinOutput(portId_d, gpioNum_d);
+      
+      User_Delay(cycle);
+      GPIO_ClearPinOutput(portId_a, gpioNum_a);
+      GPIO_ClearPinOutput(portId_b, gpioNum_b);
+      GPIO_ClearPinOutput(portId_c, gpioNum_c);
+      GPIO_ClearPinOutput(portId_d, gpioNum_d);
+    }
+}
+
 int main(void)
 {
 #if OSC40M_ENABLE
@@ -110,15 +158,15 @@ int main(void)
 #else
     PLL80M_ClockInit();
 #endif
-    
+
     Ex_Module_Init();
     Ex_BoardUartInit();
-    
+
     /************UART Configure************/
-    
-    UART0_Param_Init();    
+
+    UART0_Param_Init();
     UART2_Param_Init();
-    
+
 //    INT_EnableIRQ(UART0_IRQn);
 //    INT_EnableIRQ(UART2_IRQn);
     

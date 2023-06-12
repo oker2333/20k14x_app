@@ -27,6 +27,24 @@
  *  @{
  */
 
+#define GPIO_Pin_Set(portId, gpioNum)    *((volatile uint32_t*)(0x400FF004U + portId * 0x40U)) = (1U << gpioNum)
+#define GPIO_Pin_Clr(portId, gpioNum)    *((volatile uint32_t*)(0x400FF008U + portId * 0x40U)) = (1U << gpioNum)
+
+#define GPIO_A_Pin_Set(gpioNum) *((volatile uint32_t*)(0x400FF004U)) = (1U << gpioNum)
+#define GPIO_A_Pin_Clr(gpioNum) *((volatile uint32_t*)(0x400FF008U)) = (1U << gpioNum)
+
+#define GPIO_B_Pin_Set(gpioNum) *((volatile uint32_t*)(0x400FF044U)) = (1U << gpioNum)
+#define GPIO_B_Pin_Clr(gpioNum) *((volatile uint32_t*)(0x400FF048U)) = (1U << gpioNum)
+
+#define GPIO_C_Pin_Set(gpioNum) *((volatile uint32_t*)(0x400FF084U)) = (1U << gpioNum)
+#define GPIO_C_Pin_Clr(gpioNum) *((volatile uint32_t*)(0x400FF088U)) = (1U << gpioNum)
+
+#define GPIO_D_Pin_Set(gpioNum) *((volatile uint32_t*)(0x400FF0C4U)) = (1U << gpioNum)
+#define GPIO_D_Pin_Clr(gpioNum) *((volatile uint32_t*)(0x400FF0C8U)) = (1U << gpioNum)
+
+#define GPIO_E_Pin_Set(gpioNum) *((volatile uint32_t*)(0x400FF104U)) = (1U << gpioNum)
+#define GPIO_E_Pin_Clr(gpioNum) *((volatile uint32_t*)(0x400FF108U)) = (1U << gpioNum)   
+   
  /**
  *  @brief PORT ID type definition
  */
