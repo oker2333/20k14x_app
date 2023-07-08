@@ -880,6 +880,9 @@ void UART_FIFOConfig(UART_ID_t uartId, const UART_FIFOConfig_t * fifoConfig)
 {
     uint32_t regValue;
     uart_reg_w_t * UARTxw = (uart_reg_w_t *)(uartRegWPtr[uartId]);
+    uart_reg_t * UARTx = (uart_reg_t *)(uartRegPtr[uartId]);
+    
+    UARTx->UART_DLH_IER.UART_IER.PTIME = fifoConfig->PTHRMEnable;
 
     regValue =((((uint32_t)(fifoConfig->fifoRt) & 0x03U) << 6U)
                     | (((uint32_t)(fifoConfig->fifoTet) & 0x03U) << 4U)
@@ -1663,10 +1666,12 @@ ResultStatus_t UART_LinConfigIdFilters(UART_ID_t uartId, uint8_t idNum,
  * @return none
  *
  */
+/*
 void UART0_DriverIRQHandler(void)
 {
     UART_IntHandler(UART0_ID);
-}
+}*/
+
 /**
  * @brief  UART1 interrupt function
  *
@@ -1688,10 +1693,12 @@ void UART1_DriverIRQHandler(void)
  * @return none
  *
  */
+/*
 void UART2_DriverIRQHandler(void)
 {
     UART_IntHandler(UART2_ID);
 }
+*/
 
 /**
  * @brief  UART3 interrupt function

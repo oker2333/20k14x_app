@@ -203,6 +203,7 @@ typedef struct
  */
 typedef struct
 {
+    ControlState_t PTHRMEnable;      /*!< Enable/disable PTIM*/
     ControlState_t fifoEnable;      /*!< Enable/disable FIFO function*/
     ControlState_t txFifoReset;     /*!< Reset tx FIFO */
     ControlState_t rxFifoReset;     /*!< Reset rx FIFO */
@@ -252,7 +253,7 @@ typedef struct
 {
     UART_LinCheckSum_t checkType;   /*!< checksum type */
     uint32_t len;                   /*!< response length exclude checksum */
-    uint8_t data[8];                /*!< the response payload exclude checksum*/
+    uint8_t* data;                /*!< the response payload exclude checksum*/
 } UART_LinResponse_t;
 
 

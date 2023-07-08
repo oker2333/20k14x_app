@@ -2414,5 +2414,8 @@
     </group>
     <file>
         <name>$PROJ_DIR$\..\20k14x_app.c</name>
+        <excluded>
+            <configuration>Debug</configuration>
+        </excluded>
     </file>
 </project>
